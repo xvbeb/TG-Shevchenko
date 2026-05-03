@@ -1,0 +1,38 @@
+from __future__ import annotations
+
+from functools import lru_cache
+from typing import Optional
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+DEFAULT_LOCAL_DATABASE_URL = "postgresql+psycopg://postgres:postgres@localhost:5432/adhd_reader"
+
+
+class Settings(BaseSettings):
+    app_name: str = "ADHD Reader API"
+    environment: str = "local"
+    database_url: Optional[str] = None
+    database_public_url: Optional[str] = None
+    db_auto_create: bool = True
+    telegram_bot_token: Optional[str] = None
+    telegram_webapp_url: str = "https://reader.localhost"
+    allow_dev_auth: bool = True
+    max_upload_mb: int = 20
+    default_chunk_words: int = 220
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @property
+    def sqlalchemy_database_url(self) -> str:
+        # Railway exposes DATABASE_PUBLIC_URL for local/external connections.
+        # SQLAlchemy needs the +psycopg driver marker because this project uses psycopg v3.
+        value = self.database_public_url or self.database_url or DEFAULT_LOCAL_DATABASE_URL
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+psycopg://", 1)
+        return value
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Reader</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">quiet reader</p>
+          <h1>Продолжим с маленького фрагмента</h1>
+        </div>
+        <button id="refreshBooks" class="icon-button" title="Обновить">↻</button>
+      </section>
+
+      <section id="authNotice" class="notice hidden">
+        Открыто вне Telegram. Использую dev-пользователя для локального теста.
+      </section>
+
+      <section class="upload-panel">
+        <label class="file-picker">
+          <input id="bookFile" type="file" accept=".txt,.epub,.fb2,.zip" />
+          <span>Выбрать TXT/EPUB/FB2</span>
+        </label>
+        <input id="bookTitle" class="text-input" placeholder="Название, если нужно" />
+        <button id="uploadBook" class="primary-button">Загрузить</button>
+      </section>
+
+      <section class="layout">
+        <aside class="books-panel">
+          <div class="panel-header">
+            <h2>Книги</h2>
+            <span id="bookCount">0</span>
+          </div>
+          <div id="booksList" class="books-list"></div>
+        </aside>
+
+        <section class="reader-panel">
+          <div id="welcomeBonus" class="welcome hidden"></div>
+          <div class="assistant-panel">
+            <div>
+              <h2>AI-помощник</h2>
+              <p>Пересказ перед возвращением к книге</p>
+            </div>
+            <div class="depth-control" role="group" aria-label="Глубина пересказа">
+              <button class="depth-button active" data-depth="quick">Коротко</button>
+              <button class="depth-button" data-depth="story">События</button>
+              <button class="depth-button" data-depth="deep">Глубже</button>
+            </div>
+          </div>
+          <div class="reader-meta">
+            <span id="bookMeta">Выбери книгу</span>
+            <span id="progressMeta">0 / 0</span>
+          </div>
+          <article id="chunkText" class="chunk">
+            Здесь появится один небольшой абзац. Без гонки, без давления.
+          </article>
+          <div class="session-row">
+            <button class="session-button" data-minutes="3">3 мин</button>
+            <button class="session-button" data-minutes="5">5 мин</button>
+            <button class="session-button" data-minutes="10">10 мин</button>
+          </div>
+          <nav class="reader-actions">
+            <button id="previousChunk" class="secondary-button">Назад</button>
+            <button id="saveStop" class="secondary-button">Сохранить</button>
+            <button id="nextChunk" class="primary-button">Дальше</button>
+          </nav>
+        </section>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
