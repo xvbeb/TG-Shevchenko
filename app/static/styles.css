@@ -976,10 +976,10 @@ p {
   flex-direction: column;
   overflow: hidden;
   padding:
-    calc(86px + var(--safe-top) + var(--tg-chrome-top))
-    max(22px, calc(22px + var(--safe-right)))
+    calc(var(--safe-top) + var(--tg-chrome-top))
+    max(calc(22px + var(--safe-right)))
     calc(54px + var(--safe-bottom))
-    max(22px, calc(22px + var(--safe-left)));
+    max(calc(22px + var(--safe-left)));
   background: var(--reader-bg);
   color: var(--reader-ink);
 }
@@ -1054,7 +1054,7 @@ p {
 .focus-mode .reader-overlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 20;
   display: block;
   pointer-events: none;
 }
@@ -1076,11 +1076,11 @@ p {
 }
 
 .reader-overlay-top {
-  top: calc(16px + var(--safe-top) + var(--tg-chrome-top) + 82px);
+  top: calc(var(--safe-top) + var(--tg-chrome-top));
 }
 
 .reader-overlay-bottom {
-  bottom: calc(12px + var(--safe-bottom));
+  bottom: var(--safe-bottom);
   align-items: end;
 }
 
@@ -1171,7 +1171,7 @@ p {
 
 .reader-zones-visible.focus-mode .tap-zone::after {
   position: absolute;
-  top: 50%;
+  top: 5%;
   left: 50%;
   transform: translate(-50%, -50%);
   border: 1px solid var(--reader-line);
