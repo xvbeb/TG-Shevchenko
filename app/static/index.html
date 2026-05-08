@@ -2,76 +2,249 @@
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Reader</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <title>Quiet Reader</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=reader-focus-2" />
   </head>
   <body>
-    <main class="shell">
-      <section class="topbar">
-        <div>
-          <p class="eyebrow">quiet reader</p>
-          <h1>Продолжим с маленького фрагмента</h1>
+    <div class="app-shell">
+      <header class="app-topbar">
+        <div class="topbar-copy">
+          <p id="topEyebrow" class="top-eyebrow">quiet reader</p>
+          <h1 id="screenTitle">Домой</h1>
         </div>
-        <button id="refreshBooks" class="icon-button" title="Обновить">↻</button>
-      </section>
+        <button id="refreshBooks" class="round-button" title="Обновить" aria-label="Обновить">↻</button>
+      </header>
 
-      <section id="authNotice" class="notice hidden">
-        Открыто вне Telegram. Использую dev-пользователя для локального теста.
-      </section>
+      <main id="appMain" class="app-main">
 
-      <section class="upload-panel">
-        <label class="file-picker">
-          <input id="bookFile" type="file" accept=".txt,.epub,.fb2,.zip" />
-          <span>Выбрать TXT/EPUB/FB2</span>
-        </label>
-        <input id="bookTitle" class="text-input" placeholder="Название, если нужно" />
-        <button id="uploadBook" class="primary-button">Загрузить</button>
-      </section>
 
-      <section class="layout">
-        <aside class="books-panel">
-          <div class="panel-header">
-            <h2>Книги</h2>
-            <span id="bookCount">0</span>
+        <section class="screen active" data-screen="home">
+          <div class="hero-card">
+            <p id="homeGreeting" class="soft-label">Добро пожаловать</p>
+            <h2 data-i18n="homeHeroTitle">Вернемся к книге без рывка</h2>
+            <p data-i18n="homeHeroBody">Один маленький фрагмент уже считается хорошей сессией.</p>
           </div>
-          <div id="booksList" class="books-list"></div>
-        </aside>
 
-        <section class="reader-panel">
-          <div id="welcomeBonus" class="welcome hidden"></div>
-          <div class="assistant-panel">
+          <article class="continue-card">
             <div>
-              <h2>AI-помощник</h2>
-              <p>Пересказ перед возвращением к книге</p>
+              <p class="soft-label" data-i18n="continueLabel">Продолжить чтение</p>
+              <h3 id="continueTitle">Книга пока не выбрана</h3>
+              <p id="continueMeta">Загрузи книгу или выбери ее в библиотеке.</p>
             </div>
-            <div class="depth-control" role="group" aria-label="Глубина пересказа">
-              <button class="depth-button active" data-depth="quick">Коротко</button>
-              <button class="depth-button" data-depth="story">События</button>
-              <button class="depth-button" data-depth="deep">Глубже</button>
+            <div class="action-row">
+              <button id="continueReading" class="primary-button" data-i18n="continueButton">Продолжить</button>
+              <button id="quickSession" class="secondary-button" data-i18n="quickSessionButton">3 минуты</button>
             </div>
-          </div>
-          <div class="reader-meta">
-            <span id="bookMeta">Выбери книгу</span>
-            <span id="progressMeta">0 / 0</span>
-          </div>
-          <article id="chunkText" class="chunk">
-            Здесь появится один небольшой абзац. Без гонки, без давления.
           </article>
-          <div class="session-row">
-            <button class="session-button" data-minutes="3">3 мин</button>
-            <button class="session-button" data-minutes="5">5 мин</button>
-            <button class="session-button" data-minutes="10">10 мин</button>
-          </div>
-          <nav class="reader-actions">
-            <button id="previousChunk" class="secondary-button">Назад</button>
-            <button id="saveStop" class="secondary-button">Сохранить</button>
-            <button id="nextChunk" class="primary-button">Дальше</button>
-          </nav>
+
+          <article id="welcomePreviewCard" class="recap-card hidden">
+            <p class="soft-label">Welcome Bonus</p>
+            <p id="welcomePreview" data-i18n="welcomeFallback">Здесь будет короткое напоминание перед возвращением.</p>
+          </article>
+
+          <section class="section-block">
+            <div class="section-heading">
+              <h2 data-i18n="recentBooks">Недавние книги</h2>
+              <button class="link-button" data-go-screen="library" data-i18n="allBooks">Все</button>
+            </div>
+            <div id="recentBooks" class="horizontal-books"></div>
+          </section>
         </section>
-      </section>
-    </main>
-    <script src="/app.js"></script>
+
+        <section class="screen" data-screen="library">
+          <section class="upload-card">
+            <div>
+              <p class="soft-label" data-i18n="importLabel">Импорт</p>
+              <h2 data-i18n="addBook">Добавить книгу</h2>
+              <p data-i18n="importHint">TXT, EPUB, FB2 или .fb2.zip. PDF отложим на потом.</p>
+            </div>
+            <label class="file-picker">
+              <input id="bookFile" type="file" accept=".txt,.epub,.fb2,.zip" />
+              <span data-i18n="chooseFile">Выбрать файл</span>
+            </label>
+            <input id="bookTitle" class="text-input" placeholder="Название, если нужно" />
+            <div id="uploadStatus" class="upload-status hidden"></div>
+            <div id="uploadProgress" class="upload-progress hidden" aria-live="polite">
+              <div class="upload-progress-meta">
+                <span data-i18n="uploading">Загрузка</span>
+                <strong id="uploadProgressValue">0%</strong>
+              </div>
+              <div class="upload-progress-track">
+                <span id="uploadProgressFill"></span>
+              </div>
+            </div>
+            <button id="uploadBook" class="primary-button" data-i18n="uploadButton">Загрузить</button>
+          </section>
+
+          <section class="section-block">
+            <div class="section-heading">
+              <h2 data-i18n="libraryTitle">Библиотека</h2>
+              <span id="bookCount" class="count-pill">0</span>
+            </div>
+            <div id="booksList" class="book-list"></div>
+          </section>
+        </section>
+
+        <section class="screen" data-screen="reader">
+          <section class="reader-card">
+            <div class="reader-header">
+              <div>
+                <p class="soft-label" data-i18n="readerLabel">Reader</p>
+                <h2 id="bookMeta">Выбери книгу</h2>
+              </div>
+              <span id="progressMeta" class="count-pill">0 / 0</span>
+            </div>
+            <div class="progress-track">
+              <span id="progressFill"></span>
+            </div>
+
+            <div class="reader-search">
+              <input id="readerSearchInput" class="text-input" placeholder="Слово или номер фрагмента" />
+              <button id="readerSearchButton" class="secondary-button mini-button" data-i18n="searchButton">Найти</button>
+              <div id="readerSearchResults" class="search-results hidden"></div>
+            </div>
+
+            <article id="chunkText" class="chunk-text">
+              <button id="tapPreviousChunk" class="tap-zone tap-zone-left" aria-label="Предыдущий фрагмент"></button>
+              <button id="toggleReaderOverlay" class="tap-zone tap-zone-center" aria-label="Показать настройки чтения"></button>
+              <button id="tapNextChunk" class="tap-zone tap-zone-right" aria-label="Следующий фрагмент"></button>
+              <span id="chunkTextValue" data-i18n="readerEmpty">Здесь появится один небольшой абзац. Без гонки, без давления.</span>
+            </article>
+
+            <div class="reader-tools">
+              <label class="toggle-row">
+                <input id="focusModeToggle" type="checkbox" />
+                <span data-i18n="focusMode">Focus mode</span>
+              </label>
+              <button id="toggleWelcomeBonus" class="secondary-button mini-button">Welcome Bonus</button>
+              <div class="depth-control" role="group" aria-label="Глубина пересказа">
+                <button class="depth-button active" data-depth="quick" data-i18n="depthQuick">Коротко</button>
+                <button class="depth-button" data-depth="story" data-i18n="depthStory">События</button>
+                <button class="depth-button" data-depth="deep" data-i18n="depthDeep">Глубже</button>
+              </div>
+            </div>
+            <div id="welcomeBonus" class="recap-card compact hidden">
+              <button id="closeWelcomeBonus" class="recap-close" aria-label="Закрыть пересказ">×</button>
+              <p id="welcomeBonusText"></p>
+            </div>
+          </section>
+
+          <nav class="reader-actions">
+            <button id="exitFocusMode" class="secondary-button hidden" data-i18n="exitFocus">Выйти из focus</button>
+            <button id="saveStop" class="primary-button" data-i18n="saveAndExit">Сохранить и выйти</button>
+          </nav>
+
+          <div id="readerOverlay" class="reader-overlay hidden">
+            <div class="reader-overlay-top">
+              <button id="overlayExit" class="reader-overlay-button" data-i18n="readerClose">Закрыть</button>
+              <button id="overlaySave" class="reader-overlay-button primary" data-i18n="saveAndExit">Сохранить и выйти</button>
+            </div>
+            <div class="reader-overlay-bottom">
+              <div class="reader-progress-mini">
+                <span id="readerProgressText">0 / 0</span>
+                <div class="reader-progress-mini-track"><span id="readerProgressMiniFill"></span></div>
+              </div>
+              <div class="reader-settings-strip">
+                <button id="readerFontDown" class="reader-icon-button" aria-label="Уменьшить шрифт">A-</button>
+                <button id="readerFontUp" class="reader-icon-button" aria-label="Увеличить шрифт">A+</button>
+                <button id="readerThemeToggle" class="reader-icon-button wide" data-i18n="readerThemeDark">Dark</button>
+                <button id="readerModeToggle" class="reader-icon-button wide" data-i18n="readerModePage">Pages</button>
+                <button id="readerZonesToggle" class="reader-icon-button wide" data-i18n="readerZones">Zones</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" data-screen="progress">
+          <div class="stats-grid">
+            <article class="stat-card">
+              <p class="soft-label">Gentle streak</p>
+              <strong id="streakValue">0 дней</strong>
+              <span data-i18n="streakHint">Возвращение важнее идеальной серии.</span>
+              <div id="weekStreak" class="week-streak" aria-label="Дни недели"></div>
+            </article>
+            <article class="stat-card">
+              <p class="soft-label" data-i18n="sessionsLabel">Сессии</p>
+              <strong id="sessionsValue">0</strong>
+              <span data-i18n="sessionsHint">Короткие заходы тоже считаются.</span>
+            </article>
+            <article class="stat-card">
+              <p class="soft-label" data-i18n="chunksLabel">Фрагменты</p>
+              <strong id="chunksValue">0</strong>
+              <span data-i18n="chunksHint">Маленькие шаги, меньше трения.</span>
+            </article>
+          </div>
+
+          <section class="section-block">
+            <h2 data-i18n="recentActivity">Недавняя активность</h2>
+            <div id="activityList" class="activity-list"></div>
+          </section>
+        </section>
+
+        <section class="screen" data-screen="settings">
+          <section class="settings-list">
+            <article class="setting-row">
+              <div>
+                <p class="soft-label" data-i18n="languageLabel">Язык</p>
+                <h3 data-i18n="languageTitle">Язык интерфейса</h3>
+              </div>
+              <div class="language-toggle" role="group" aria-label="Язык">
+                <button class="language-option active" data-language="ru">RU</button>
+                <button class="language-option" data-language="uk">UA</button>
+              </div>
+            </article>
+            <article class="setting-row">
+              <div>
+                <p class="soft-label" data-i18n="textSizeLabel">Размер текста</p>
+                <h3 data-i18n="comfortableText">Комфортный</h3>
+              </div>
+              <span class="count-pill" data-i18n="soon">Soon</span>
+            </article>
+            <article class="setting-row">
+              <div>
+                <p class="soft-label" data-i18n="themeLabel">Тема</p>
+                <h3 data-i18n="themeAuto">Системная / Telegram</h3>
+              </div>
+              <span class="count-pill">Auto</span>
+            </article>
+            <article class="setting-row">
+              <div>
+                <p class="soft-label" data-i18n="chunkSizeLabel">Размер фрагмента</p>
+                <h3 data-i18n="oneParagraph">Один абзац</h3>
+              </div>
+              <span class="count-pill">MVP</span>
+            </article>
+            <article class="setting-row">
+              <div>
+                <p class="soft-label">Focus mode</p>
+                <h3 data-i18n="focusHint">Минимум отвлечений</h3>
+              </div>
+              <span class="count-pill" data-i18n="soon">Soon</span>
+            </article>
+            <article class="setting-row">
+              <div>
+                <p class="soft-label">Telegram user</p>
+                <h3 id="telegramUserInfo">Local Reader</h3>
+              </div>
+            </article>
+          </section>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Главная навигация">
+        <button class="nav-item active" data-screen-target="home"><span>🏠</span><b data-i18n="navHome">Home</b></button>
+        <button class="nav-item" data-screen-target="library"><span>📚</span><b data-i18n="navLibrary">Library</b></button>
+        <button class="nav-item" data-screen-target="reader"><span>📖</span><b data-i18n="navReader">Reader</b></button>
+        <button class="nav-item" data-screen-target="progress"><span>📊</span><b data-i18n="navProgress">Progress</b></button>
+        <button class="nav-item" data-screen-target="settings"><span>⚙️</span><b data-i18n="navSettings">Settings</b></button>
+      </nav>
+    </div>
+    <script src="/app.js?v=reader-focus-2"></script>
   </body>
 </html>

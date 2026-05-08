@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -7,7 +9,7 @@ from typing import Optional
 from zipfile import ZipFile
 
 from bs4 import BeautifulSoup
-from ebooklib import ITEM_DOCUMENT, epub
+from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
 from app.utils.text import count_words, normalize_text, split_paragraphs
 
@@ -19,6 +21,7 @@ class ParsedBook:
     source_type: str
     chunks: list[str]
     total_words: int
+    cover_image_data_url: Optional[str] = None
 
 
 def parse_book_upload(filename: str, content: bytes, title: Optional[str] = None, author: Optional[str] = None) -> ParsedBook:
@@ -40,7 +43,7 @@ def _parse_txt(filename: str, content: bytes, title: Optional[str], author: Opti
 
     chunks = split_paragraphs(text)
     return ParsedBook(
-        title=title or Path(filename).stem,
+        title=clean_book_title(title or Path(filename).stem, filename),
         author=author,
         source_type="txt",
         chunks=chunks,
@@ -57,6 +60,7 @@ def _parse_epub(filename: str, content: bytes, title: Optional[str], author: Opt
 
     metadata_title = _first_metadata(book, "DC", "title")
     metadata_author = _first_metadata(book, "DC", "creator")
+    cover_image_data_url = _extract_epub_cover(book)
     paragraphs: list[str] = []
 
     for item in book.get_items_of_type(ITEM_DOCUMENT):
@@ -67,11 +71,12 @@ def _parse_epub(filename: str, content: bytes, title: Optional[str], author: Opt
                 paragraphs.append(text)
 
     return ParsedBook(
-        title=title or metadata_title or Path(filename).stem,
+        title=clean_book_title(title or metadata_title or Path(filename).stem, filename),
         author=author or metadata_author,
         source_type="epub",
         chunks=paragraphs,
         total_words=sum(count_words(chunk) for chunk in paragraphs),
+        cover_image_data_url=cover_image_data_url,
     )
 
 
@@ -82,6 +87,7 @@ def _parse_fb2(filename: str, content: bytes, title: Optional[str], author: Opti
 
     metadata_title = _tag_text(soup, "book-title")
     metadata_author = _fb2_author(soup)
+    cover_image_data_url = _extract_fb2_cover(soup)
     paragraphs: list[str] = []
 
     for tag in soup.find_all(["p", "subtitle", "v"]):
@@ -90,12 +96,123 @@ def _parse_fb2(filename: str, content: bytes, title: Optional[str], author: Opti
             paragraphs.append(value)
 
     return ParsedBook(
-        title=title or metadata_title or Path(filename).stem.replace(".fb2", ""),
+        title=clean_book_title(title or metadata_title or _strip_known_extensions(filename), filename),
         author=author or metadata_author,
         source_type="fb2",
         chunks=paragraphs,
         total_words=sum(count_words(chunk) for chunk in paragraphs),
+        cover_image_data_url=cover_image_data_url,
     )
+
+
+def clean_book_title(raw_title: str, filename: str) -> str:
+    value = normalize_text(raw_title or _strip_known_extensions(filename))
+    value = _strip_known_extensions(value)
+    value = re.sub(r"(?i)^microsoft\s+word\s*[-–—:]*\s*", "", value)
+    value = re.sub(r"[_]+", " ", value)
+    value = re.sub(r"(?i)^r[\s.-]+", "", value)
+    value = re.sub(r"(?i)\bfull\s*text\b", "", value)
+    value = re.sub(r"\s+\d+\s*$", "", value)
+    value = normalize_text(value).strip(" -–—_.")
+    if not value:
+        value = _strip_known_extensions(filename)
+    if _is_latin_uppercase_noise(value):
+        value = value.title()
+    return value or "Без названия"
+
+
+def _strip_known_extensions(value: str) -> str:
+    path = Path(value)
+    name = path.name
+    known_suffixes = {".txt", ".epub", ".fb2", ".zip", ".doc", ".docx", ".rtf"}
+    changed = True
+    while changed:
+        changed = False
+        suffix = Path(name).suffix.lower()
+        if suffix in known_suffixes:
+            name = name[: -len(suffix)]
+            changed = True
+    return name
+
+
+def _is_latin_uppercase_noise(value: str) -> bool:
+    letters = [char for char in value if char.isalpha()]
+    latin_letters = [char for char in letters if char.lower() in "abcdefghijklmnopqrstuvwxyz"]
+    if not latin_letters or len(latin_letters) < max(3, len(letters) // 2):
+        return False
+    return all(not char.islower() for char in latin_letters)
+
+
+def _image_data_url(content: bytes, media_type: Optional[str]) -> Optional[str]:
+    if not content:
+        return None
+    if len(content) > 1_500_000:
+        return None
+    mime = media_type or "image/jpeg"
+    encoded = base64.b64encode(content).decode("ascii")
+    return f"data:{mime};base64,{encoded}"
+
+
+def _extract_epub_cover(book: epub.EpubBook) -> Optional[str]:
+    cover_ids: list[str] = []
+    for _, attrs in book.get_metadata("OPF", "cover"):
+        content = attrs.get("content") if isinstance(attrs, dict) else None
+        if content:
+            cover_ids.append(content)
+
+    for cover_id in cover_ids:
+        item = book.get_item_with_id(cover_id)
+        if item:
+            return _image_data_url(item.get_content(), getattr(item, "media_type", None))
+
+    image_items = list(book.get_items_of_type(ITEM_IMAGE))
+    for item in image_items:
+        name = (getattr(item, "file_name", "") or "").lower()
+        if "cover" in name:
+            return _image_data_url(item.get_content(), getattr(item, "media_type", None))
+    if image_items:
+        item = image_items[0]
+        return _image_data_url(item.get_content(), getattr(item, "media_type", None))
+    return None
+
+
+def _extract_fb2_cover(soup: BeautifulSoup) -> Optional[str]:
+    cover_id = _fb2_cover_id(soup)
+    binaries = soup.find_all("binary")
+    for binary in binaries:
+        binary_id = binary.get("id")
+        if cover_id and binary_id != cover_id:
+            continue
+        media_type = binary.get("content-type") or "image/jpeg"
+        try:
+            content = base64.b64decode("".join(binary.get_text().split()), validate=False)
+        except ValueError:
+            continue
+        return _image_data_url(content, media_type)
+
+    for binary in binaries:
+        media_type = binary.get("content-type") or ""
+        if not media_type.startswith("image/"):
+            continue
+        try:
+            content = base64.b64decode("".join(binary.get_text().split()), validate=False)
+        except ValueError:
+            continue
+        return _image_data_url(content, media_type)
+    return None
+
+
+def _fb2_cover_id(soup: BeautifulSoup) -> Optional[str]:
+    coverpage = soup.find("coverpage")
+    if not coverpage:
+        return None
+    image = coverpage.find("image")
+    if not image:
+        return None
+    for value in image.attrs.values():
+        if isinstance(value, str) and value.startswith("#"):
+            return value[1:]
+    return None
 
 
 def _first_metadata(book: epub.EpubBook, namespace: str, name: str) -> Optional[str]:

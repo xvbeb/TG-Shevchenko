@@ -18,6 +18,7 @@ class Book(Base):
     author: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
     source_type: Mapped[str] = mapped_column(String(16), nullable=False)
     original_filename: Mapped[Optional[str]] = mapped_column(String(512), nullable=True)
+    cover_image_data_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     total_words: Mapped[int] = mapped_column(Integer, default=0)
     total_chunks: Mapped[int] = mapped_column(Integer, default=0)
     uploaded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

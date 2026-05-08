@@ -33,3 +33,12 @@ def get_or_create_telegram_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+def update_user_language(db: Session, user: User, language: str) -> User:
+    preferences = dict(user.preferences or {})
+    preferences["language"] = language
+    user.preferences = preferences
+    db.commit()
+    db.refresh(user)
+    return user

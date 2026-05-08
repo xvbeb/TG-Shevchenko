@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict
 
@@ -16,3 +16,7 @@ class UserRead(BaseModel):
     preferences: dict[str, Any] = {}
     gentle_streak_days: int
     created_at: datetime
+
+
+class UserPreferencesUpdate(BaseModel):
+    language: Literal["ru", "uk"]

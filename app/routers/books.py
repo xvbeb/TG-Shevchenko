@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.routers.dependencies import get_current_user
-from app.schemas.book import BookDetail, BookRead, ReadResponse
+from app.schemas.book import BookDetail, BookRead, BookSearchResponse, ReadRangeResponse, ReadResponse
 from app.schemas.progress import ProgressUpdate, ReadingProgressRead
 from app.schemas.welcome_bonus import WelcomeBonusRead
 from app.services.books import (
@@ -17,8 +17,10 @@ from app.services.books import (
     create_book_from_upload,
     get_book_progress,
     get_chunk,
+    get_chunks_range,
     get_user_book,
     list_user_books,
+    search_book_chunks,
 )
 from app.services.progress import touch_last_opened, update_progress
 from app.services.welcome_bonus import create_welcome_bonus
@@ -83,6 +85,29 @@ def read_book(
     )
 
 
+@router.get("/{book_id}/read-range", response_model=ReadRangeResponse)
+def read_book_range(
+    book_id: int,
+    start_chunk_index: int = Query(default=0, ge=0),
+    limit: int = Query(default=24, ge=1, le=80),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    book = get_user_book(db, current_user, book_id)
+    selected_index = clamp_chunk_index(book, start_chunk_index)
+    chunks = get_chunks_range(db, book.id, selected_index, limit)
+    end_index = chunks[-1].chunk_index if chunks else selected_index
+    return ReadRangeResponse(
+        book=BookRead.model_validate(book),
+        chunks=chunks,
+        start_chunk_index=selected_index,
+        end_chunk_index=end_index,
+        total_chunks=book.total_chunks,
+        has_previous=selected_index > 0,
+        has_next=end_index < max(0, book.total_chunks - 1),
+    )
+
+
 @router.post("/{book_id}/progress", response_model=ReadingProgressRead)
 def save_progress(
     book_id: int,
@@ -101,3 +126,14 @@ def welcome_bonus(
     current_user: User = Depends(get_current_user),
 ):
     return create_welcome_bonus(db, current_user, book_id, depth)
+
+
+@router.get("/{book_id}/search", response_model=BookSearchResponse)
+def search_book(
+    book_id: int,
+    q: str = Query(min_length=1, max_length=160),
+    limit: int = Query(default=20, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return {"query": q, "results": search_book_chunks(db, current_user, book_id, q, limit)}

@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import books, sessions
+from app.routers import books, sessions, users
 
 
 settings = get_settings()
@@ -24,6 +24,7 @@ app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 app.include_router(books.router)
 app.include_router(sessions.router)
+app.include_router(users.router)
 
 
 @app.get("/health")

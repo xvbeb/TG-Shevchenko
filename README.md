@@ -160,6 +160,36 @@ uvicorn app.main:app --reload
 python bot.py
 ```
 
+## Testing Telegram Fullscreen UX
+
+1. Run FastAPI locally or deploy it to Railway.
+2. Expose it through HTTPS:
+
+```bash
+ngrok http 8000
+```
+
+3. Set the public URL:
+
+```env
+TELEGRAM_WEBAPP_URL="https://your-domain.ngrok-free.app"
+```
+
+4. Restart the bot:
+
+```bash
+python bot.py
+```
+
+5. In Telegram, send `/start`, open the Mini App, and check:
+
+- the app expands after opening;
+- the top area stays fixed;
+- the bottom navigation stays visible;
+- only the current screen scrolls;
+- Home, Library, Reader, Progress, and Settings switch without page reloads;
+- Telegram dark/light theme colors are reflected where Telegram exposes theme params.
+
 ## API Routes
 
 - `POST /books/upload`

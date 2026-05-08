@@ -1,39 +1,332 @@
 const tg = window.Telegram?.WebApp;
 
+const SCREEN_META = {
+  home: { titleKey: "screenHome", eyebrow: "quiet reader" },
+  library: { titleKey: "screenLibrary", eyebrow: "cloud books" },
+  reader: { titleKey: "screenReader", eyebrow: "one chunk" },
+  progress: { titleKey: "screenProgress", eyebrow: "gentle pace" },
+  settings: { titleKey: "screenSettings", eyebrow: "reading comfort" },
+};
+
+const I18N = {
+  ru: {
+    screenHome: "Домой",
+    screenLibrary: "Библиотека",
+    screenReader: "Чтение",
+    screenProgress: "Прогресс",
+    screenSettings: "Настройки",
+    homeHeroTitle: "Вернемся к книге без рывка",
+    homeHeroBody: "Один маленький фрагмент уже считается хорошей сессией.",
+    welcomeDefault: "Добро пожаловать",
+    greeting: "Привет, {name}",
+    continueLabel: "Продолжить чтение",
+    continueButton: "Продолжить",
+    quickSessionButton: "3 минуты",
+    noBookTitle: "Книга пока не выбрана",
+    noBookMeta: "Загрузи книгу или выбери ее в библиотеке.",
+    continueMeta: "{current} из {total} фрагментов",
+    welcomeFallback: "Здесь будет короткое напоминание перед возвращением.",
+    recentBooks: "Недавние книги",
+    allBooks: "Все",
+    importLabel: "Импорт",
+    addBook: "Добавить книгу",
+    importHint: "TXT, EPUB, FB2 или .fb2.zip. PDF отложим на потом.",
+    chooseFile: "Выбрать файл",
+    titlePlaceholder: "Название, если нужно",
+    uploading: "Загрузка",
+    uploadButton: "Загрузить",
+    libraryTitle: "Библиотека",
+    readerLabel: "Reader",
+    chooseBook: "Выбери книгу",
+    searchPlaceholder: "Слово или номер фрагмента",
+    searchButton: "Найти",
+    readerEmpty: "Выбери книгу в библиотеке или загрузи новый файл.",
+    readerInitial: "Здесь появится один небольшой абзац. Без гонки, без давления.",
+    focusMode: "Focus mode",
+    depthQuick: "Коротко",
+    depthStory: "События",
+    depthDeep: "Глубже",
+    exitFocus: "Выйти из focus",
+    saveAndExit: "Сохранить и выйти",
+    streakZero: "0 дней",
+    streakOne: "1 день",
+    streakHint: "Возвращение важнее идеальной серии.",
+    sessionsLabel: "Сессии",
+    sessionsHint: "Короткие заходы тоже считаются.",
+    chunksLabel: "Фрагменты",
+    chunksHint: "Маленькие шаги, меньше трения.",
+    recentActivity: "Недавняя активность",
+    languageLabel: "Язык",
+    languageTitle: "Язык интерфейса",
+    textSizeLabel: "Размер текста",
+    comfortableText: "Комфортный",
+    themeLabel: "Тема",
+    themeAuto: "Системная / Telegram",
+    chunkSizeLabel: "Размер фрагмента",
+    oneParagraph: "Один абзац",
+    focusHint: "Минимум отвлечений",
+    soon: "Soon",
+    navHome: "Home",
+    navLibrary: "Library",
+    navReader: "Reader",
+    navProgress: "Progress",
+    navSettings: "Settings",
+    refresh: "Обновить",
+    previousChunk: "Предыдущий фрагмент",
+    nextChunk: "Следующий фрагмент",
+    toggleReaderOverlay: "Показать настройки чтения",
+    readerClose: "Закрыть",
+    readerFontDown: "Уменьшить шрифт",
+    readerFontUp: "Увеличить шрифт",
+    readerThemeDark: "Dark",
+    readerThemeBlack: "Black",
+    readerThemeSepia: "Sepia",
+    readerModePage: "Pages",
+    readerModeChunk: "Chunks",
+    readerZones: "Zones",
+    readerZonesOff: "Hide zones",
+    recapDepth: "Глубина пересказа",
+    closeRecap: "Закрыть пересказ",
+    mainNav: "Главная навигация",
+    weekDays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+    emptyLibrary: "Пока пусто. Добавь книгу, и она появится здесь.",
+    authorUnknown: "Автор не указан",
+    compactBookMeta: "{author} · {chunks} фрагм.",
+    libraryBookMeta: "{author} · {words} слов",
+    libraryCurrentMeta: "{author} · сейчас {current}/{total}",
+    uploadNoFile: "Выбери TXT, EPUB или FB2 файл",
+    selectedFile: "Выбран файл",
+    selectedFileHint: "Нажми “Загрузить”, чтобы добавить книгу.",
+    uploaded: "Загружено",
+    addedBook: "Добавлена книга: {title}",
+    chooseBookNotice: "Сначала выбери книгу",
+    savedPlace: "Сохранено место: {title}, фрагмент {chunk}",
+    finishedBook: "Ты дочитал(а) книгу! Это было не про скорость, а про возвращение.",
+    savedNotice: "Сохранено. Можно спокойно вернуться позже.",
+    sessionStarted: "Начата спокойная сессия на {minutes} минуты",
+    sessionNotice: "{minutes} минуты. Один фрагмент уже достаточно.",
+    progressChunk: "Фрагмент {page} · {words} слов",
+    uploadFailed: "Upload failed",
+    uploadAborted: "Upload aborted",
+    invalidUploadResponse: "Upload response is not valid JSON",
+    unnamedBook: "Без названия",
+    languageSaved: "Язык сохранён.",
+    activityEmpty: "Здесь появятся мягкие отметки: сессии, сохранения и возвращения к книге.",
+  },
+  uk: {
+    screenHome: "Додому",
+    screenLibrary: "Бібліотека",
+    screenReader: "Читання",
+    screenProgress: "Прогрес",
+    screenSettings: "Налаштування",
+    homeHeroTitle: "Повернімося до книжки без ривка",
+    homeHeroBody: "Один маленький фрагмент вже рахується доброю сесією.",
+    welcomeDefault: "Ласкаво просимо",
+    greeting: "Привіт, {name}",
+    continueLabel: "Продовжити читання",
+    continueButton: "Продовжити",
+    quickSessionButton: "3 хвилини",
+    noBookTitle: "Книжку ще не вибрано",
+    noBookMeta: "Завантаж книжку або вибери її в бібліотеці.",
+    continueMeta: "{current} із {total} фрагментів",
+    welcomeFallback: "Тут буде коротке нагадування перед поверненням.",
+    recentBooks: "Нещодавні книжки",
+    allBooks: "Усі",
+    importLabel: "Імпорт",
+    addBook: "Додати книжку",
+    importHint: "TXT, EPUB, FB2 або .fb2.zip. PDF відкладемо на потім.",
+    chooseFile: "Вибрати файл",
+    titlePlaceholder: "Назва, якщо потрібно",
+    uploading: "Завантаження",
+    uploadButton: "Завантажити",
+    libraryTitle: "Бібліотека",
+    readerLabel: "Reader",
+    chooseBook: "Вибери книжку",
+    searchPlaceholder: "Слово або номер фрагмента",
+    searchButton: "Знайти",
+    readerEmpty: "Вибери книжку в бібліотеці або завантаж новий файл.",
+    readerInitial: "Тут з'явиться один невеликий абзац. Без гонитви, без тиску.",
+    focusMode: "Focus mode",
+    depthQuick: "Коротко",
+    depthStory: "Події",
+    depthDeep: "Глибше",
+    exitFocus: "Вийти з focus",
+    saveAndExit: "Зберегти й вийти",
+    streakZero: "0 днів",
+    streakOne: "1 день",
+    streakHint: "Повернення важливіше за ідеальну серію.",
+    sessionsLabel: "Сесії",
+    sessionsHint: "Короткі підходи теж рахуються.",
+    chunksLabel: "Фрагменти",
+    chunksHint: "Малі кроки, менше тертя.",
+    recentActivity: "Нещодавня активність",
+    languageLabel: "Мова",
+    languageTitle: "Мова інтерфейсу",
+    textSizeLabel: "Розмір тексту",
+    comfortableText: "Комфортний",
+    themeLabel: "Тема",
+    themeAuto: "Системна / Telegram",
+    chunkSizeLabel: "Розмір фрагмента",
+    oneParagraph: "Один абзац",
+    focusHint: "Мінімум відволікань",
+    soon: "Скоро",
+    navHome: "Додому",
+    navLibrary: "Бібліотека",
+    navReader: "Reader",
+    navProgress: "Прогрес",
+    navSettings: "Налаштування",
+    refresh: "Оновити",
+    previousChunk: "Попередній фрагмент",
+    nextChunk: "Наступний фрагмент",
+    toggleReaderOverlay: "Показати налаштування читання",
+    readerClose: "Закрити",
+    readerFontDown: "Зменшити шрифт",
+    readerFontUp: "Збільшити шрифт",
+    readerThemeDark: "Dark",
+    readerThemeBlack: "Black",
+    readerThemeSepia: "Sepia",
+    readerModePage: "Pages",
+    readerModeChunk: "Chunks",
+    readerZones: "Зони",
+    readerZonesOff: "Сховати зони",
+    recapDepth: "Глибина переказу",
+    closeRecap: "Закрити переказ",
+    mainNav: "Головна навігація",
+    weekDays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
+    emptyLibrary: "Поки порожньо. Додай книжку, і вона з'явиться тут.",
+    authorUnknown: "Автор не вказаний",
+    compactBookMeta: "{author} · {chunks} фрагм.",
+    libraryBookMeta: "{author} · {words} слів",
+    libraryCurrentMeta: "{author} · зараз {current}/{total}",
+    uploadNoFile: "Вибери TXT, EPUB або FB2 файл",
+    selectedFile: "Вибрано файл",
+    selectedFileHint: "Натисни “Завантажити”, щоб додати книжку.",
+    uploaded: "Завантажено",
+    addedBook: "Додано книжку: {title}",
+    chooseBookNotice: "Спочатку вибери книжку",
+    savedPlace: "Збережено місце: {title}, фрагмент {chunk}",
+    finishedBook: "Ти дочитав(ла) книжку! Це було не про швидкість, а про повернення.",
+    savedNotice: "Збережено. Можна спокійно повернутися пізніше.",
+    sessionStarted: "Почато спокійну сесію на {minutes} хвилини",
+    sessionNotice: "{minutes} хвилини. Один фрагмент уже достатньо.",
+    progressChunk: "Фрагмент {page} · {words} слів",
+    uploadFailed: "Завантаження не вдалося",
+    uploadAborted: "Завантаження скасовано",
+    invalidUploadResponse: "Відповідь upload не є валідним JSON",
+    unnamedBook: "Без назви",
+    languageSaved: "Мову збережено.",
+    activityEmpty: "Тут з'являться м'які позначки: сесії, збереження й повернення до книжки.",
+  },
+};
+
 const state = {
+  screen: "home",
+  language: "ru",
+  currentUser: null,
+  displayName: "Local Reader",
   books: [],
   activeBook: null,
+  activeBookDetail: null,
   currentChunkIndex: 0,
   totalChunks: 0,
-  activeSessionId: null,
+  currentChunk: null,
+  welcomeBonus: "",
   recapDepth: "quick",
-  celebratedBookIds: new Set(),
+  activeSessionId: null,
+  chunkCache: new Map(),
+  searchResults: [],
+  readerControlsVisible: false,
+  readerOverlayTimer: null,
+  readerSettings: {
+    fontStep: 0,
+    theme: "dark",
+    mode: "page",
+    showZones: false,
+  },
+  readerPages: [],
+  readerPageCursor: 0,
+  readerPageOffset: 0,
+  readerBufferedUntilChunkIndex: -1,
+  readerPrefetchPromise: null,
+  readerRangeSize: 32,
+  readerPrefetchThreshold: 7,
+  uploadProgress: 0,
+  isUploading: false,
+  activity: [],
+  stats: {
+    sessions: 0,
+    savedChunks: 0,
+  },
 };
 
 const els = {
-  authNotice: document.querySelector("#authNotice"),
+  appShell: document.querySelector(".app-shell"),
+  topbar: document.querySelector(".app-topbar"),
+  screenTitle: document.querySelector("#screenTitle"),
+  topEyebrow: document.querySelector("#topEyebrow"),
   refreshBooks: document.querySelector("#refreshBooks"),
+  homeGreeting: document.querySelector("#homeGreeting"),
+  continueTitle: document.querySelector("#continueTitle"),
+  continueMeta: document.querySelector("#continueMeta"),
+  continueReading: document.querySelector("#continueReading"),
+  quickSession: document.querySelector("#quickSession"),
+  welcomePreviewCard: document.querySelector("#welcomePreviewCard"),
+  welcomePreview: document.querySelector("#welcomePreview"),
+  recentBooks: document.querySelector("#recentBooks"),
   bookFile: document.querySelector("#bookFile"),
   bookTitle: document.querySelector("#bookTitle"),
+  uploadStatus: document.querySelector("#uploadStatus"),
+  uploadProgress: document.querySelector("#uploadProgress"),
+  uploadProgressFill: document.querySelector("#uploadProgressFill"),
+  uploadProgressValue: document.querySelector("#uploadProgressValue"),
   uploadBook: document.querySelector("#uploadBook"),
   booksList: document.querySelector("#booksList"),
   bookCount: document.querySelector("#bookCount"),
-  welcomeBonus: document.querySelector("#welcomeBonus"),
-  depthButtons: document.querySelectorAll(".depth-button"),
   bookMeta: document.querySelector("#bookMeta"),
   progressMeta: document.querySelector("#progressMeta"),
+  progressFill: document.querySelector("#progressFill"),
+  readerSearchInput: document.querySelector("#readerSearchInput"),
+  readerSearchButton: document.querySelector("#readerSearchButton"),
+  readerSearchResults: document.querySelector("#readerSearchResults"),
   chunkText: document.querySelector("#chunkText"),
-  previousChunk: document.querySelector("#previousChunk"),
-  nextChunk: document.querySelector("#nextChunk"),
+  chunkTextValue: document.querySelector("#chunkTextValue"),
+  welcomeBonus: document.querySelector("#welcomeBonus"),
+  welcomeBonusText: document.querySelector("#welcomeBonusText"),
+  toggleWelcomeBonus: document.querySelector("#toggleWelcomeBonus"),
+  closeWelcomeBonus: document.querySelector("#closeWelcomeBonus"),
+  depthButtons: document.querySelectorAll(".depth-button"),
+  tapPreviousChunk: document.querySelector("#tapPreviousChunk"),
+  toggleReaderOverlay: document.querySelector("#toggleReaderOverlay"),
+  tapNextChunk: document.querySelector("#tapNextChunk"),
   saveStop: document.querySelector("#saveStop"),
-  sessionButtons: document.querySelectorAll(".session-button"),
+  exitFocusMode: document.querySelector("#exitFocusMode"),
+  readerOverlay: document.querySelector("#readerOverlay"),
+  overlayExit: document.querySelector("#overlayExit"),
+  overlaySave: document.querySelector("#overlaySave"),
+  readerProgressText: document.querySelector("#readerProgressText"),
+  readerProgressMiniFill: document.querySelector("#readerProgressMiniFill"),
+  readerFontDown: document.querySelector("#readerFontDown"),
+  readerFontUp: document.querySelector("#readerFontUp"),
+  readerThemeToggle: document.querySelector("#readerThemeToggle"),
+  readerModeToggle: document.querySelector("#readerModeToggle"),
+  readerZonesToggle: document.querySelector("#readerZonesToggle"),
+  focusModeToggle: document.querySelector("#focusModeToggle"),
+  streakValue: document.querySelector("#streakValue"),
+  weekStreak: document.querySelector("#weekStreak"),
+  sessionsValue: document.querySelector("#sessionsValue"),
+  chunksValue: document.querySelector("#chunksValue"),
+  activityList: document.querySelector("#activityList"),
+  telegramUserInfo: document.querySelector("#telegramUserInfo"),
+  languageOptions: document.querySelectorAll(".language-option"),
+  navItems: document.querySelectorAll(".nav-item"),
+  screens: document.querySelectorAll(".screen"),
+  screenLinks: document.querySelectorAll("[data-go-screen]"),
 };
 
 function authHeaders() {
   if (tg?.initData) {
     return { Authorization: `Bearer ${tg.initData}` };
   }
-  els.authNotice.classList.remove("hidden");
   return {
     "X-Telegram-User-Id": "dev-user-1",
     "X-Telegram-Username": "local_reader",
@@ -51,40 +344,283 @@ async function api(path, options = {}) {
   return response.json();
 }
 
-async function loadBooks() {
-  state.books = await api("/books");
-  renderBooks();
+function t(key, params = {}) {
+  const template = I18N[state.language]?.[key] ?? I18N.ru[key] ?? key;
+  if (Array.isArray(template)) return template;
+  return Object.entries(params).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), template);
 }
 
-function renderBooks() {
-  els.bookCount.textContent = String(state.books.length);
-  els.booksList.innerHTML = "";
+function setLanguage(language) {
+  state.language = language === "uk" ? "uk" : "ru";
+  document.documentElement.lang = state.language === "uk" ? "uk" : "ru";
+  applyTranslations();
+}
 
-  if (!state.books.length) {
-    const empty = document.createElement("p");
-    empty.className = "book-subtitle";
-    empty.textContent = "Пока пусто. Загрузи небольшой TXT и попробуй один абзац.";
-    els.booksList.append(empty);
+function applyTranslations() {
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    node.textContent = t(node.dataset.i18n);
+  });
+  els.bookTitle.placeholder = t("titlePlaceholder");
+  els.readerSearchInput.placeholder = t("searchPlaceholder");
+  els.refreshBooks.title = t("refresh");
+  els.refreshBooks.setAttribute("aria-label", t("refresh"));
+  els.tapPreviousChunk.setAttribute("aria-label", t("previousChunk"));
+  els.tapNextChunk.setAttribute("aria-label", t("nextChunk"));
+  els.toggleReaderOverlay.setAttribute("aria-label", t("toggleReaderOverlay"));
+  els.readerFontDown.setAttribute("aria-label", t("readerFontDown"));
+  els.readerFontUp.setAttribute("aria-label", t("readerFontUp"));
+  document.querySelector(".depth-control")?.setAttribute("aria-label", t("recapDepth"));
+  els.closeWelcomeBonus.setAttribute("aria-label", t("closeRecap"));
+  document.querySelector(".bottom-nav")?.setAttribute("aria-label", t("mainNav"));
+  els.homeGreeting.textContent = state.displayName ? t("greeting", { name: state.displayName }) : t("welcomeDefault");
+  els.languageOptions.forEach((button) => {
+    button.classList.toggle("active", button.dataset.language === state.language);
+  });
+  const meta = SCREEN_META[state.screen];
+  els.screenTitle.textContent = t(meta.titleKey);
+  renderAll();
+  applyReaderSettings();
+}
+
+async function loadCurrentUser() {
+  const user = await api("/users/me");
+  state.currentUser = user;
+  state.displayName = user.display_name || user.username || state.displayName;
+  const language = user.preferences?.language || "ru";
+  setLanguage(language);
+}
+
+async function saveLanguage(language) {
+  setLanguage(language);
+  const user = await api("/users/me/preferences", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ language }),
+  });
+  state.currentUser = user;
+  state.welcomeBonus = "";
+  if (state.activeBook) {
+    await loadWelcomeBonus(state.activeBook.id);
+  }
+  showNotice(t("languageSaved"));
+}
+
+function setupTelegram() {
+  syncViewportHeight();
+  syncSafeArea();
+  applyTelegramTheme();
+  setupZoomGuard();
+
+  if (!tg) return;
+
+  tg.ready();
+  tg.expand();
+  requestTelegramFullscreen();
+  tg.disableVerticalSwipes?.();
+  tg.setHeaderColor?.(tg.themeParams?.bg_color || "#0f1413");
+  tg.setBackgroundColor?.(tg.themeParams?.bg_color || "#0f1413");
+  tg.onEvent?.("themeChanged", applyTelegramTheme);
+  tg.onEvent?.("viewportChanged", syncViewportHeight);
+  tg.onEvent?.("fullscreenChanged", syncFullscreenState);
+  tg.onEvent?.("fullscreenFailed", syncFullscreenState);
+  tg.onEvent?.("safeAreaChanged", syncSafeArea);
+  tg.onEvent?.("contentSafeAreaChanged", syncSafeArea);
+
+  const user = tg.initDataUnsafe?.user;
+  if (user) {
+    const name = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || `ID ${user.id}`;
+    state.displayName = name;
+    if (els.homeGreeting) els.homeGreeting.textContent = t("greeting", { name });
+    if (els.telegramUserInfo) els.telegramUserInfo.textContent = name;
+  }
+}
+
+function requestTelegramFullscreen() {
+  if (!tg?.requestFullscreen) {
+    document.body.classList.add("telegram-expanded");
     return;
   }
 
-  for (const book of state.books) {
-    const item = document.createElement("button");
-    item.className = `book-item ${state.activeBook?.id === book.id ? "active" : ""}`;
-    item.innerHTML = `
-      <span class="book-title"></span>
-      <span class="book-subtitle">${book.total_chunks} фрагм. · ${book.total_words} слов</span>
-    `;
-    item.querySelector(".book-title").textContent = book.title;
-    item.addEventListener("click", () => openBook(book.id));
-    els.booksList.append(item);
+  try {
+    tg.requestFullscreen();
+    document.body.classList.add("telegram-fullscreen-requested");
+  } catch (error) {
+    document.body.classList.add("telegram-expanded");
+  }
+  syncFullscreenState();
+}
+
+function syncFullscreenState() {
+  const isFullscreen = Boolean(tg?.isFullscreen);
+  document.body.classList.toggle("telegram-fullscreen", isFullscreen);
+  document.body.classList.toggle("telegram-expanded", !isFullscreen);
+  document.documentElement.style.setProperty("--tg-chrome-top", isFullscreen ? "58px" : "0px");
+  syncViewportHeight();
+  syncSafeArea();
+}
+
+function setupZoomGuard() {
+  const prevent = (event) => event.preventDefault();
+  document.addEventListener("gesturestart", prevent, { passive: false });
+  document.addEventListener("gesturechange", prevent, { passive: false });
+  document.addEventListener("gestureend", prevent, { passive: false });
+  document.addEventListener(
+    "touchmove",
+    (event) => {
+      if (event.touches.length > 1) event.preventDefault();
+    },
+    { passive: false },
+  );
+
+  let lastTouchEnd = 0;
+  document.addEventListener(
+    "touchend",
+    (event) => {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) event.preventDefault();
+      lastTouchEnd = now;
+    },
+    { passive: false },
+  );
+}
+
+function syncViewportHeight() {
+  const height = tg?.viewportStableHeight || tg?.viewportHeight || window.innerHeight;
+  document.documentElement.style.setProperty("--app-height", `${height}px`);
+}
+
+function syncSafeArea() {
+  const content = tg?.contentSafeAreaInset || {};
+  const safe = tg?.safeAreaInset || {};
+  const top = Math.max(content.top || 0, safe.top || 0);
+  const bottom = Math.max(content.bottom || 0, safe.bottom || 0);
+  const left = Math.max(content.left || 0, safe.left || 0);
+  const right = Math.max(content.right || 0, safe.right || 0);
+
+  document.documentElement.style.setProperty("--safe-top", `${top}px`);
+  document.documentElement.style.setProperty("--safe-bottom", `${bottom}px`);
+  document.documentElement.style.setProperty("--safe-left", `${left}px`);
+  document.documentElement.style.setProperty("--safe-right", `${right}px`);
+}
+
+function applyTelegramTheme() {
+  if (!tg?.themeParams) return;
+  const params = tg.themeParams;
+  const map = {
+    bg_color: "--bg",
+    secondary_bg_color: "--surface",
+    section_bg_color: "--paper",
+    text_color: "--text",
+    hint_color: "--muted",
+    button_color: "--accent",
+  };
+  for (const [telegramKey, cssVar] of Object.entries(map)) {
+    if (params[telegramKey]) {
+      document.documentElement.style.setProperty(cssVar, params[telegramKey]);
+    }
   }
 }
 
+function navigate(screen) {
+  if (screen !== "reader" && document.body.classList.contains("focus-mode")) {
+    setFocusMode(false);
+  }
+  state.screen = screen;
+  const meta = SCREEN_META[screen];
+  els.screenTitle.textContent = t(meta.titleKey);
+  els.topEyebrow.textContent = meta.eyebrow;
+
+  els.screens.forEach((item) => {
+    item.classList.toggle("active", item.dataset.screen === screen);
+    if (item.dataset.screen === screen) item.scrollTop = 0;
+  });
+  els.navItems.forEach((item) => {
+    item.classList.toggle("active", item.dataset.screenTarget === screen);
+  });
+  syncHeaderState();
+}
+
+async function loadBooks() {
+  state.books = await api("/books");
+  if (state.books.length && !state.activeBook) {
+    await openBook(state.books[0].id, { switchToReader: false });
+  }
+  renderAll();
+}
+
+async function openBook(bookId, options = { switchToReader: true }) {
+  const book = state.books.find((item) => item.id === bookId) || null;
+  if (!book) return;
+
+  state.activeBook = book;
+  state.activeBookDetail = await api(`/books/${bookId}`);
+  state.searchResults = [];
+  resetReaderPages();
+  if (els.readerSearchInput) els.readerSearchInput.value = "";
+  state.currentChunkIndex = state.activeBookDetail.current_chunk_index || 0;
+  state.totalChunks = state.activeBookDetail.total_chunks || book.total_chunks || 0;
+  await loadWelcomeBonus(bookId);
+  await readChunk(bookId, state.currentChunkIndex);
+  renderAll();
+
+  if (options.switchToReader) {
+    navigate("reader");
+  }
+}
+
+async function loadWelcomeBonus(bookId) {
+  try {
+    const bonus = await api(`/books/${bookId}/welcome-bonus?depth=${state.recapDepth}`);
+    state.welcomeBonus = bonus.text;
+  } catch (error) {
+    state.welcomeBonus = "";
+  }
+}
+
+async function readChunk(bookId, chunkIndex = state.currentChunkIndex) {
+  const safeIndex = Math.max(0, Math.min(chunkIndex, Math.max(0, state.totalChunks - 1)));
+  const cacheKey = cacheKeyFor(bookId, safeIndex);
+  const cached = state.chunkCache.get(cacheKey);
+  const data = cached || (await api(`/books/${bookId}/read?chunk_index=${safeIndex}`));
+
+  state.chunkCache.set(cacheKey, data);
+  state.activeBook = data.book;
+  state.currentChunk = data.chunk;
+  state.currentChunkIndex = data.current_chunk_index;
+  state.totalChunks = data.total_chunks;
+
+  renderReader();
+  preloadAdjacentChunks(bookId, state.currentChunkIndex);
+}
+
+function resetReaderPages() {
+  state.readerPages = [];
+  state.readerPageCursor = 0;
+  state.readerPageOffset = 0;
+  state.readerBufferedUntilChunkIndex = -1;
+  state.readerPrefetchPromise = null;
+}
+
+function preloadAdjacentChunks(bookId, currentIndex) {
+  [currentIndex - 1, currentIndex + 1].forEach((index) => {
+    if (index < 0 || index >= state.totalChunks) return;
+    const key = cacheKeyFor(bookId, index);
+    if (state.chunkCache.has(key)) return;
+    api(`/books/${bookId}/read?chunk_index=${index}`)
+      .then((data) => state.chunkCache.set(key, data))
+      .catch(() => {});
+  });
+}
+
+function cacheKeyFor(bookId, index) {
+  return `${bookId}:${index}`;
+}
+
 async function uploadBook() {
+  if (state.isUploading) return;
   const file = els.bookFile.files?.[0];
   if (!file) {
-    showTelegramAlert("Выбери TXT, EPUB или FB2 файл");
+    showNotice(t("uploadNoFile"));
     return;
   }
 
@@ -94,86 +630,322 @@ async function uploadBook() {
     form.append("title", els.bookTitle.value.trim());
   }
 
-  const book = await api("/books/upload", { method: "POST", body: form });
-  els.bookFile.value = "";
-  els.bookTitle.value = "";
-  await loadBooks();
-  await openBook(book.id);
+  try {
+    setUploadProgress(0, true);
+    state.isUploading = true;
+    els.uploadBook.disabled = true;
+    const book = await uploadBookWithProgress(form);
+    setUploadProgress(100, true);
+    els.bookFile.value = "";
+    els.bookTitle.value = "";
+    showUploadedBook(book);
+    state.chunkCache.clear();
+    await loadBooks();
+    await openBook(book.id, { switchToReader: true });
+    addActivity(t("addedBook", { title: formatBookTitle(book.title) }));
+  } finally {
+    state.isUploading = false;
+    els.uploadBook.disabled = false;
+    window.setTimeout(() => setUploadProgress(0, false), 700);
+  }
 }
 
-async function openBook(bookId) {
-  state.activeBook = state.books.find((book) => book.id === bookId) || null;
-  state.currentChunkIndex = 0;
-  await showWelcomeBonus(bookId);
-  await readChunk(bookId);
-  renderBooks();
+function uploadBookWithProgress(form) {
+  return new Promise((resolve, reject) => {
+    const request = new XMLHttpRequest();
+    request.open("POST", "/books/upload");
+    for (const [key, value] of Object.entries(authHeaders())) {
+      request.setRequestHeader(key, value);
+    }
+
+    request.upload.addEventListener("progress", (event) => {
+      if (!event.lengthComputable) {
+        setUploadProgress(12, true);
+        return;
+      }
+      const percent = Math.min(96, Math.round((event.loaded / event.total) * 100));
+      setUploadProgress(percent, true);
+    });
+
+    request.addEventListener("load", () => {
+      if (request.status >= 200 && request.status < 300) {
+        try {
+          resolve(JSON.parse(request.responseText));
+        } catch (error) {
+          reject(new Error(t("invalidUploadResponse")));
+        }
+        return;
+      }
+      reject(new Error(request.responseText || `Request failed: ${request.status}`));
+    });
+    request.addEventListener("error", () => reject(new Error(t("uploadFailed"))));
+    request.addEventListener("abort", () => reject(new Error(t("uploadAborted"))));
+    request.send(form);
+  });
 }
 
-async function showWelcomeBonus(bookId) {
-  const bonus = await api(`/books/${bookId}/welcome-bonus?depth=${state.recapDepth}`);
-  els.welcomeBonus.textContent = bonus.text;
-  els.welcomeBonus.classList.remove("hidden");
+function setUploadProgress(percent, visible) {
+  state.uploadProgress = Math.max(0, Math.min(100, percent));
+  els.uploadProgress.classList.toggle("hidden", !visible);
+  els.uploadProgressFill.style.width = `${state.uploadProgress}%`;
+  els.uploadProgressValue.textContent = `${state.uploadProgress}%`;
 }
 
-async function readChunk(bookId, chunkIndex = null) {
-  const suffix = chunkIndex === null ? "" : `?chunk_index=${chunkIndex}`;
-  const data = await api(`/books/${bookId}/read${suffix}`);
-  state.activeBook = data.book;
-  state.currentChunkIndex = data.current_chunk_index;
-  state.totalChunks = data.total_chunks;
+function loadReaderSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("adhdReader.readerSettings") || "{}");
+    state.readerSettings.fontStep = Number.isFinite(saved.fontStep) ? saved.fontStep : 0;
+    state.readerSettings.theme = ["dark", "black", "sepia"].includes(saved.theme) ? saved.theme : "dark";
+    state.readerSettings.mode = ["page", "chunk"].includes(saved.mode) ? saved.mode : "page";
+    state.readerSettings.showZones = Boolean(saved.showZones);
+  } catch (error) {
+    state.readerSettings = { fontStep: 0, theme: "dark", mode: "page", showZones: false };
+  }
+  applyReaderSettings();
+}
 
-  els.bookMeta.textContent = data.book.title;
-  els.progressMeta.textContent = `${data.current_chunk_index + 1} / ${data.total_chunks}`;
-  els.chunkText.textContent = data.chunk?.text || "Текст не найден.";
-  els.previousChunk.disabled = !data.has_previous;
-  els.nextChunk.disabled = !data.has_next;
+function saveReaderSettings() {
+  localStorage.setItem("adhdReader.readerSettings", JSON.stringify(state.readerSettings));
+}
+
+function applyReaderSettings() {
+  const fontStep = Math.max(-2, Math.min(3, state.readerSettings.fontStep));
+  state.readerSettings.fontStep = fontStep;
+  document.documentElement.style.setProperty("--reader-font-adjust", `${fontStep}px`);
+  document.body.classList.toggle("reader-theme-black", state.readerSettings.theme === "black");
+  document.body.classList.toggle("reader-theme-sepia", state.readerSettings.theme === "sepia");
+  document.body.classList.toggle("reader-theme-dark", state.readerSettings.theme === "dark");
+  document.body.classList.toggle("reader-page-mode", state.readerSettings.mode === "page");
+  document.body.classList.toggle("reader-chunk-mode", state.readerSettings.mode === "chunk");
+  document.body.classList.toggle("reader-zones-visible", state.readerSettings.showZones);
+  const themeKey = {
+    dark: "readerThemeDark",
+    black: "readerThemeBlack",
+    sepia: "readerThemeSepia",
+  }[state.readerSettings.theme];
+  els.readerThemeToggle.textContent = t(themeKey);
+  els.readerModeToggle.textContent = t(state.readerSettings.mode === "page" ? "readerModePage" : "readerModeChunk");
+  els.readerZonesToggle.textContent = t(state.readerSettings.showZones ? "readerZonesOff" : "readerZones");
+}
+
+function changeReaderFont(delta) {
+  state.readerSettings.fontStep = Math.max(-2, Math.min(3, state.readerSettings.fontStep + delta));
+  applyReaderSettings();
+  saveReaderSettings();
+  resetReaderPages();
+  updateImmersiveReaderText().catch((error) => showNotice(error.message));
+  revealReaderOverlay();
+}
+
+function cycleReaderTheme() {
+  const themes = ["dark", "black", "sepia"];
+  const index = themes.indexOf(state.readerSettings.theme);
+  state.readerSettings.theme = themes[(index + 1) % themes.length];
+  applyReaderSettings();
+  saveReaderSettings();
+  revealReaderOverlay();
+}
+
+async function toggleReaderMode() {
+  state.readerSettings.mode = state.readerSettings.mode === "page" ? "chunk" : "page";
+  applyReaderSettings();
+  saveReaderSettings();
+  resetReaderPages();
+  if (state.activeBook) {
+    await updateImmersiveReaderText();
+    renderReaderProgressMini(state.totalChunks ? ((state.currentChunkIndex + 1) / state.totalChunks) * 100 : 0);
+  }
+  revealReaderOverlay();
+}
+
+function toggleReaderZones() {
+  state.readerSettings.showZones = !state.readerSettings.showZones;
+  applyReaderSettings();
+  saveReaderSettings();
+  revealReaderOverlay();
+}
+
+async function moveReaderPage(delta) {
+  await ensureReaderPages();
+  if (!state.readerPages.length) return;
+
+  const nextCursor = state.readerPageCursor + delta;
+  if (nextCursor < 0) {
+    const previousChunk = Math.max(0, state.readerPages[0].startChunkIndex - state.readerRangeSize);
+    if (previousChunk === state.readerPages[0].startChunkIndex) return;
+    resetReaderPages();
+    state.currentChunkIndex = previousChunk;
+    await ensureReaderPages();
+    showReaderPage(0);
+    return;
+  }
+
+  if (nextCursor >= state.readerPages.length) {
+    await prefetchReaderPages();
+    if (nextCursor >= state.readerPages.length) return;
+  }
+
+  showReaderPage(nextCursor);
+  if (state.readerPages.length - state.readerPageCursor <= state.readerPrefetchThreshold) {
+    prefetchReaderPages().catch(() => {});
+  }
+}
+
+async function ensureReaderPages() {
+  if (state.readerSettings.mode !== "page" || !state.activeBook) return;
+  if (state.readerPages.length) return;
+
+  const startIndex = Math.max(0, state.currentChunkIndex);
+  state.readerPageOffset = estimatePageNumberForChunk(startIndex) - 1;
+  await loadReaderPageRange(startIndex);
+  showReaderPage(0);
+  prefetchReaderPages().catch(() => {});
+}
+
+async function prefetchReaderPages() {
+  if (!state.activeBook || state.readerPrefetchPromise) {
+    return state.readerPrefetchPromise;
+  }
+  if (state.readerBufferedUntilChunkIndex >= state.totalChunks - 1) return null;
+  const nextStart = Math.max(0, state.readerBufferedUntilChunkIndex + 1);
+  state.readerPrefetchPromise = loadReaderPageRange(nextStart).finally(() => {
+    state.readerPrefetchPromise = null;
+  });
+  return state.readerPrefetchPromise;
+}
+
+async function loadReaderPageRange(startChunkIndex) {
+  const data = await api(
+    `/books/${state.activeBook.id}/read-range?start_chunk_index=${startChunkIndex}&limit=${state.readerRangeSize}`,
+  );
+  const chunks = data.chunks || [];
+  if (!chunks.length) return;
+  chunks.forEach((chunk) => {
+    state.chunkCache.set(cacheKeyFor(state.activeBook.id, chunk.chunk_index), {
+      book: data.book,
+      chunk,
+      current_chunk_index: chunk.chunk_index,
+      total_chunks: data.total_chunks,
+      has_previous: chunk.chunk_index > 0,
+      has_next: chunk.chunk_index < data.total_chunks - 1,
+    });
+  });
+  const pages = paginateReaderChunks(chunks);
+  state.readerPages.push(...pages);
+  state.readerBufferedUntilChunkIndex = Math.max(state.readerBufferedUntilChunkIndex, data.end_chunk_index);
+}
+
+function paginateReaderChunks(chunks) {
+  const targetChars = getReaderPageTargetChars();
+  const pages = [];
+  let textParts = [];
+  let charCount = 0;
+  let startChunkIndex = chunks[0]?.chunk_index ?? state.currentChunkIndex;
+  let endChunkIndex = startChunkIndex;
+
+  chunks.forEach((chunk) => {
+    const text = (chunk.text || "").trim();
+    if (!text) return;
+    const separatorChars = textParts.length ? 2 : 0;
+    if (textParts.length && charCount + separatorChars + text.length > targetChars) {
+      pages.push({
+        text: textParts.join("\n\n"),
+        startChunkIndex,
+        endChunkIndex,
+      });
+      textParts = [];
+      charCount = 0;
+      startChunkIndex = chunk.chunk_index;
+    }
+    textParts.push(text);
+    charCount += separatorChars + text.length;
+    endChunkIndex = chunk.chunk_index;
+  });
+
+  if (textParts.length) {
+    pages.push({
+      text: textParts.join("\n\n"),
+      startChunkIndex,
+      endChunkIndex,
+    });
+  }
+  return pages;
+}
+
+function getReaderPageTargetChars() {
+  const width = Math.min(window.innerWidth - 44, 544);
+  const height = Math.max(360, window.innerHeight - 180);
+  const fontSize = Math.max(18, Math.min(29, window.innerWidth * 0.052 + state.readerSettings.fontStep));
+  const charsPerLine = Math.max(28, Math.floor(width / (fontSize * 0.54)));
+  const lines = Math.max(10, Math.floor(height / (fontSize * 1.58)));
+  return Math.max(900, Math.floor(charsPerLine * lines * 0.86));
+}
+
+function showReaderPage(cursor) {
+  const page = state.readerPages[cursor];
+  if (!page) return;
+  state.readerPageCursor = cursor;
+  state.currentChunkIndex = page.startChunkIndex;
+  const cachedStart = state.chunkCache.get(cacheKeyFor(state.activeBook.id, page.startChunkIndex));
+  if (cachedStart?.chunk) {
+    state.currentChunk = cachedStart.chunk;
+  }
+  els.chunkTextValue.textContent = page.text;
+  renderReaderProgressMini(state.totalChunks ? ((page.endChunkIndex + 1) / state.totalChunks) * 100 : 0);
+  preloadAdjacentChunks(state.activeBook.id, page.endChunkIndex);
+}
+
+function estimatePageNumberForChunk(chunkIndex) {
+  return Math.max(1, Math.floor(chunkIndex / 2.6) + 1);
+}
+
+async function moveChunk(delta) {
+  if (!state.activeBook) {
+    navigate("library");
+    return;
+  }
+  if (document.body.classList.contains("focus-mode") && state.readerSettings.mode === "page") {
+    await moveReaderPage(delta);
+    return;
+  }
+  const nextIndex = Math.max(0, Math.min(state.totalChunks - 1, state.currentChunkIndex + delta));
+  if (nextIndex === state.currentChunkIndex) return;
+  await readChunk(state.activeBook.id, nextIndex);
 }
 
 async function saveProgress() {
-  if (!state.activeBook) return;
-  const words = countWords(els.chunkText.textContent);
-  await api(`/books/${state.activeBook.id}/progress`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      current_chunk_index: state.currentChunkIndex,
-      chunks_read: 1,
-      words_read: words,
-    }),
-  });
-  if (isBookFinished()) {
-    showCompletion();
+  if (!state.activeBook) {
+    showNotice(t("chooseBookNotice"));
     return;
   }
-  showTelegramAlert("Сохранено. Можно спокойно вернуться позже.");
-}
 
-async function move(delta) {
-  if (!state.activeBook) return;
-  const nextIndex = Math.max(0, Math.min(state.totalChunks - 1, state.currentChunkIndex + delta));
-  await readChunk(state.activeBook.id, nextIndex);
-  await saveProgressSilently();
-  if (delta > 0 && isBookFinished()) {
-    showCompletion();
-  }
-}
-
-async function saveProgressSilently() {
-  if (!state.activeBook) return;
   await api(`/books/${state.activeBook.id}/progress`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       current_chunk_index: state.currentChunkIndex,
-      chunks_read: 1,
-      words_read: countWords(els.chunkText.textContent),
+      chunks_read: 0,
+      words_read: 0,
     }),
   });
+
+  state.stats.savedChunks += 1;
+  addActivity(t("savedPlace", { title: formatBookTitle(state.activeBook.title), chunk: state.currentChunkIndex + 1 }));
+  renderProgress();
+
+  if (isBookFinished()) {
+    showNotice(t("finishedBook"));
+  } else {
+    showNotice(t("savedNotice"));
+  }
+  setFocusMode(false);
+  navigate("home");
 }
 
-async function startSession(minutes) {
+async function startSession(minutes = 3) {
   if (!state.activeBook) {
-    showTelegramAlert("Сначала выбери книгу");
+    navigate("library");
+    showNotice(t("chooseBookNotice"));
     return;
   }
 
@@ -187,19 +959,11 @@ async function startSession(minutes) {
     }),
   });
   state.activeSessionId = session.id;
-  showTelegramAlert(`${minutes} минут. Один абзац уже считается хорошим стартом.`);
-}
-
-function countWords(text) {
-  return text.trim().split(/\s+/).filter(Boolean).length;
-}
-
-function showTelegramAlert(message) {
-  if (tg?.showAlert) {
-    tg.showAlert(message);
-  } else {
-    alert(message);
-  }
+  state.stats.sessions += 1;
+  addActivity(t("sessionStarted", { minutes }));
+  navigate("reader");
+  renderProgress();
+  showNotice(t("sessionNotice", { minutes }));
 }
 
 async function changeDepth(depth) {
@@ -208,55 +972,434 @@ async function changeDepth(depth) {
     button.classList.toggle("active", button.dataset.depth === depth);
   });
   if (state.activeBook) {
-    await showWelcomeBonus(state.activeBook.id);
+    await loadWelcomeBonus(state.activeBook.id);
+    renderWelcome();
   }
+}
+
+function renderAll() {
+  renderHome();
+  renderLibrary();
+  renderReader();
+  renderProgress();
+  renderSettings();
+}
+
+function renderHome() {
+  const book = state.activeBook;
+  els.continueTitle.textContent = book ? formatBookTitle(book.title) : t("noBookTitle");
+  els.continueMeta.textContent = book
+    ? t("continueMeta", { current: state.currentChunkIndex + 1, total: state.totalChunks || book.total_chunks })
+    : t("noBookMeta");
+  els.continueReading.disabled = !book;
+  els.quickSession.disabled = !book;
+
+  renderWelcome();
+  renderBookCollection(els.recentBooks, state.books.slice(0, 6), true);
+}
+
+function renderWelcome() {
+  const hasBonus = Boolean(state.welcomeBonus);
+  els.welcomePreviewCard.classList.toggle("hidden", !hasBonus);
+  if (!hasBonus) {
+    els.welcomeBonus.classList.add("hidden");
+  }
+  els.toggleWelcomeBonus.disabled = !hasBonus;
+  if (hasBonus) {
+    els.welcomePreview.textContent = state.welcomeBonus;
+    els.welcomeBonusText.textContent = state.welcomeBonus;
+  }
+}
+
+function renderLibrary() {
+  els.bookCount.textContent = String(state.books.length);
+  renderBookCollection(els.booksList, state.books, false);
+}
+
+function renderBookCollection(container, books, compact) {
+  container.innerHTML = "";
+  if (!books.length) {
+    const empty = document.createElement("div");
+    empty.className = "activity-item";
+    empty.textContent = t("emptyLibrary");
+    container.append(empty);
+    return;
+  }
+
+  books.forEach((book) => {
+    const item = document.createElement("button");
+    item.className = `book-card ${state.activeBook?.id === book.id ? "active" : ""}`;
+    const cover = document.createElement("span");
+    cover.className = "book-cover";
+    if (book.cover_image_data_url) {
+      const image = document.createElement("img");
+      image.src = book.cover_image_data_url;
+      image.alt = "";
+      cover.append(image);
+    } else {
+      cover.textContent = formatBookTitle(book.title).slice(0, 1).toUpperCase() || "B";
+    }
+
+    const copy = document.createElement("span");
+    copy.className = "book-copy";
+    const title = document.createElement("span");
+    title.className = "book-title";
+    title.textContent = formatBookTitle(book.title);
+    const subtitle = document.createElement("span");
+    subtitle.className = "book-subtitle";
+    subtitle.textContent = compact ? getCompactBookMeta(book) : getLibraryBookMeta(book);
+    copy.append(title, subtitle);
+    item.append(cover, copy);
+    item.addEventListener("click", () => openBook(book.id, { switchToReader: true }).catch((error) => showNotice(error.message)));
+    container.append(item);
+  });
+}
+
+function renderReader() {
+  const book = state.activeBook;
+  els.bookMeta.textContent = book ? formatBookTitle(book.title) : t("chooseBook");
+  els.progressMeta.textContent = state.totalChunks ? `${state.currentChunkIndex + 1} / ${state.totalChunks}` : "0 / 0";
+  els.chunkTextValue.textContent = state.currentChunk?.text || t("readerEmpty");
+
+  const progress = state.totalChunks ? ((state.currentChunkIndex + 1) / state.totalChunks) * 100 : 0;
+  els.progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+  renderReaderProgressMini(progress);
+  els.tapPreviousChunk.disabled = !book || state.currentChunkIndex <= 0;
+  els.tapNextChunk.disabled = !book || state.currentChunkIndex >= state.totalChunks - 1;
+  els.saveStop.disabled = !book;
+  els.readerSearchButton.disabled = !book;
+  renderWelcome();
+  renderSearchResults();
+  if (document.body.classList.contains("focus-mode")) {
+    updateImmersiveReaderText().catch((error) => showNotice(error.message));
+  }
+}
+
+function renderReaderProgressMini(progress) {
+  if (state.readerSettings.mode === "page" && state.totalChunks) {
+    const currentPage = state.readerPageOffset + state.readerPageCursor + 1;
+    const totalPages = Math.max(currentPage, estimatePageNumberForChunk(state.totalChunks - 1));
+    els.readerProgressText.textContent = `${currentPage} / ${totalPages}`;
+  } else {
+    els.readerProgressText.textContent = state.totalChunks ? `${state.currentChunkIndex + 1} / ${state.totalChunks}` : "0 / 0";
+  }
+  els.readerProgressMiniFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+}
+
+async function updateImmersiveReaderText() {
+  if (!document.body.classList.contains("focus-mode") || !state.activeBook || !state.currentChunk) return;
+  if (state.readerSettings.mode === "chunk") {
+    els.chunkTextValue.textContent = state.currentChunk.text || t("readerEmpty");
+    return;
+  }
+
+  await ensureReaderPages();
+}
+
+function showUploadedBook(book) {
+  if (!els.uploadStatus) return;
+  els.uploadStatus.innerHTML = `
+    <span>${t("uploaded")}</span>
+    <strong></strong>
+    <small></small>
+  `;
+  els.uploadStatus.querySelector("strong").textContent = formatBookTitle(book.title);
+  els.uploadStatus.querySelector("small").textContent = t("compactBookMeta", {
+    author: book.author || t("authorUnknown"),
+    chunks: book.total_chunks,
+  });
+  els.uploadStatus.classList.remove("hidden");
+}
+
+function renderProgress() {
+  els.streakValue.textContent = state.stats.sessions > 0 ? t("streakOne") : t("streakZero");
+  els.sessionsValue.textContent = String(state.stats.sessions);
+  els.chunksValue.textContent = String(Math.max(state.currentChunkIndex + (state.activeBook ? 1 : 0), state.stats.savedChunks));
+  renderWeekStreak();
+
+  els.activityList.innerHTML = "";
+  const activity = state.activity.slice(0, 5);
+  if (!activity.length) {
+    const empty = document.createElement("div");
+    empty.className = "activity-item";
+    empty.textContent = t("activityEmpty");
+    els.activityList.append(empty);
+    return;
+  }
+  activity.forEach((text) => {
+    const item = document.createElement("div");
+    item.className = "activity-item";
+    item.textContent = text;
+    els.activityList.append(item);
+  });
+}
+
+function renderWeekStreak() {
+  const labels = t("weekDays");
+  const today = new Date();
+  const mondayBasedDay = (today.getDay() + 6) % 7;
+  els.weekStreak.innerHTML = "";
+  labels.forEach((label, index) => {
+    const item = document.createElement("span");
+    item.className = "week-streak-day";
+    item.classList.toggle("today", index === mondayBasedDay);
+    item.classList.toggle("done", state.stats.sessions > 0 && index === mondayBasedDay);
+    item.textContent = label;
+    els.weekStreak.append(item);
+  });
+}
+
+function renderSettings() {
+  if (!tg?.initDataUnsafe?.user) return;
+  const user = tg.initDataUnsafe.user;
+  els.telegramUserInfo.textContent = [user.first_name, user.last_name].filter(Boolean).join(" ") || user.username || `ID ${user.id}`;
+}
+
+function getCompactBookMeta(book) {
+  return t("compactBookMeta", { author: book.author || t("authorUnknown"), chunks: book.total_chunks });
+}
+
+function getLibraryBookMeta(book) {
+  if (state.activeBook?.id === book.id && state.totalChunks) {
+    return t("libraryCurrentMeta", {
+      author: book.author || t("authorUnknown"),
+      current: state.currentChunkIndex + 1,
+      total: state.totalChunks,
+    });
+  }
+  return t("libraryBookMeta", { author: book.author || t("authorUnknown"), words: book.total_words });
+}
+
+function formatBookTitle(title) {
+  let value = String(title || t("unnamedBook")).trim();
+  value = value.replace(/\.(txt|epub|fb2|zip|docx?|rtf)$/gi, "");
+  value = value.replace(/^microsoft\s+word\s*[-–—:]*\s*/i, "");
+  value = value.replace(/_+/g, " ");
+  value = value.replace(/^r[\s.-]+/i, "");
+  value = value.replace(/\bfull\s*text\b/gi, "");
+  value = value.replace(/\s+\d+\s*$/g, "");
+  value = value.replace(/\s+/g, " ").trim().replace(/^[\s._-]+|[\s._-]+$/g, "");
+  if (!value) return t("unnamedBook");
+  if (/[A-Z]/.test(value) && value === value.toUpperCase()) {
+    return value.toLowerCase().replace(/\b[a-z]/g, (letter) => letter.toUpperCase());
+  }
+  return value;
+}
+
+async function searchInBook() {
+  if (!state.activeBook) {
+    showNotice(t("chooseBookNotice"));
+    return;
+  }
+  const query = els.readerSearchInput.value.trim();
+  if (!query) {
+    state.searchResults = [];
+    renderSearchResults();
+    return;
+  }
+  const data = await api(`/books/${state.activeBook.id}/search?q=${encodeURIComponent(query)}`);
+  state.searchResults = data.results || [];
+  renderSearchResults();
+}
+
+function renderSearchResults() {
+  if (!els.readerSearchResults) return;
+  els.readerSearchResults.innerHTML = "";
+  if (!state.searchResults.length) {
+    els.readerSearchResults.classList.add("hidden");
+    return;
+  }
+  state.searchResults.forEach((result) => {
+    const item = document.createElement("button");
+    item.className = "search-result";
+    const meta = document.createElement("span");
+    meta.className = "search-result-meta";
+    meta.textContent = t("progressChunk", { page: result.page_number, words: result.word_count });
+    const snippet = document.createElement("span");
+    snippet.className = "search-result-snippet";
+    snippet.textContent = result.snippet;
+    item.append(meta, snippet);
+    item.addEventListener("click", () => {
+      readChunk(state.activeBook.id, result.chunk_index).catch((error) => showNotice(error.message));
+      state.searchResults = [];
+      renderSearchResults();
+    });
+    els.readerSearchResults.append(item);
+  });
+  els.readerSearchResults.classList.remove("hidden");
+}
+
+function addActivity(text) {
+  state.activity.unshift(text);
 }
 
 function isBookFinished() {
   return state.activeBook && state.totalChunks > 0 && state.currentChunkIndex >= state.totalChunks - 1;
 }
 
-function showCompletion() {
-  if (!state.activeBook || state.celebratedBookIds.has(state.activeBook.id)) return;
-  state.celebratedBookIds.add(state.activeBook.id);
-  showTelegramAlert("Ты дочитал(а) книгу! 🎉✨ Это было не про скорость, а про возвращение. Мягко, красиво, победа.");
-}
-
-function applyTelegramTheme() {
-  if (!tg?.themeParams) return;
-  const map = {
-    bg_color: "--bg",
-    secondary_bg_color: "--surface",
-    section_bg_color: "--paper",
-    text_color: "--text",
-    hint_color: "--muted",
-    button_color: "--accent",
-    button_text_color: "--button-text",
-  };
-  for (const [telegramKey, cssVar] of Object.entries(map)) {
-    const value = tg.themeParams[telegramKey];
-    if (value) {
-      document.documentElement.style.setProperty(cssVar, value);
-    }
+function showNotice(message) {
+  if (tg?.showAlert) {
+    tg.showAlert(message);
+  } else {
+    window.alert(message);
   }
 }
 
-els.refreshBooks.addEventListener("click", loadBooks);
-els.uploadBook.addEventListener("click", () => uploadBook().catch((error) => showTelegramAlert(error.message)));
-els.previousChunk.addEventListener("click", () => move(-1).catch((error) => showTelegramAlert(error.message)));
-els.nextChunk.addEventListener("click", () => move(1).catch((error) => showTelegramAlert(error.message)));
-els.saveStop.addEventListener("click", () => saveProgress().catch((error) => showTelegramAlert(error.message)));
-els.sessionButtons.forEach((button) => {
-  button.addEventListener("click", () => startSession(Number(button.dataset.minutes)).catch((error) => showTelegramAlert(error.message)));
-});
-els.depthButtons.forEach((button) => {
-  button.addEventListener("click", () => changeDepth(button.dataset.depth).catch((error) => showTelegramAlert(error.message)));
-});
+function bindEvents() {
+  els.refreshBooks.addEventListener("click", () => loadBooks().catch((error) => showNotice(error.message)));
+  els.uploadBook.addEventListener("click", () => uploadBook().catch((error) => showNotice(error.message)));
+  els.bookFile.addEventListener("change", () => {
+    if (els.bookFile.files?.[0]) {
+      els.uploadStatus.innerHTML = `<span>${t("selectedFile")}</span><strong>${formatBookTitle(els.bookFile.files[0].name)}</strong><small>${t("selectedFileHint")}</small>`;
+      els.uploadStatus.classList.remove("hidden");
+    }
+  });
+  els.readerSearchButton.addEventListener("click", () => searchInBook().catch((error) => showNotice(error.message)));
+  els.readerSearchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      searchInBook().catch((error) => showNotice(error.message));
+    }
+  });
+  els.continueReading.addEventListener("click", () => {
+    if (state.activeBook) navigate("reader");
+  });
+  els.quickSession.addEventListener("click", () => startSession(3).catch((error) => showNotice(error.message)));
+  els.tapPreviousChunk.addEventListener("click", () => moveChunk(-1).catch((error) => showNotice(error.message)));
+  els.tapNextChunk.addEventListener("click", () => moveChunk(1).catch((error) => showNotice(error.message)));
+  els.toggleReaderOverlay.addEventListener("click", () => toggleReaderOverlay());
+  els.saveStop.addEventListener("click", () => saveProgress().catch((error) => showNotice(error.message)));
+  els.focusModeToggle.addEventListener("change", () => {
+    setFocusMode(els.focusModeToggle.checked);
+  });
+  els.exitFocusMode.addEventListener("click", () => {
+    setFocusMode(false);
+  });
+  els.overlayExit.addEventListener("click", () => {
+    setFocusMode(false);
+  });
+  els.overlaySave.addEventListener("click", () => saveProgress().catch((error) => showNotice(error.message)));
+  els.readerFontDown.addEventListener("click", () => changeReaderFont(-1));
+  els.readerFontUp.addEventListener("click", () => changeReaderFont(1));
+  els.readerThemeToggle.addEventListener("click", () => cycleReaderTheme());
+  els.readerModeToggle.addEventListener("click", () => toggleReaderMode().catch((error) => showNotice(error.message)));
+  els.readerZonesToggle.addEventListener("click", () => toggleReaderZones());
+  els.toggleWelcomeBonus.addEventListener("click", () => {
+    if (state.welcomeBonus) els.welcomeBonus.classList.toggle("hidden");
+  });
+  els.closeWelcomeBonus.addEventListener("click", () => {
+    els.welcomeBonus.classList.add("hidden");
+  });
 
-if (tg) {
-  applyTelegramTheme();
-  tg.ready();
-  tg.expand();
+  els.navItems.forEach((button) => {
+    button.addEventListener("click", () => navigate(button.dataset.screenTarget));
+  });
+  els.screenLinks.forEach((button) => {
+    button.addEventListener("click", () => navigate(button.dataset.goScreen));
+  });
+  els.depthButtons.forEach((button) => {
+    button.addEventListener("click", () => changeDepth(button.dataset.depth).catch((error) => showNotice(error.message)));
+  });
+  els.languageOptions.forEach((button) => {
+    button.addEventListener("click", () => saveLanguage(button.dataset.language).catch((error) => showNotice(error.message)));
+  });
+
+  window.addEventListener("resize", syncViewportHeight);
+  window.addEventListener("keydown", (event) => {
+    if (!document.body.classList.contains("focus-mode")) return;
+    if (event.key === "ArrowLeft") moveChunk(-1).catch((error) => showNotice(error.message));
+    if (event.key === "ArrowRight") moveChunk(1).catch((error) => showNotice(error.message));
+    if (event.key === "Escape") setFocusMode(false);
+  });
+  els.screens.forEach((screen) => {
+    screen.addEventListener("scroll", syncHeaderState, { passive: true });
+  });
+  bindReaderSwipe();
 }
 
-loadBooks().catch((error) => showTelegramAlert(error.message));
+function syncHeaderState() {
+  const activeScreen = document.querySelector(".screen.active");
+  const scrolled = Boolean(activeScreen && activeScreen.scrollTop > 18);
+  els.topbar.classList.toggle("is-condensed", scrolled);
+}
+
+function bindReaderSwipe() {
+  let startX = 0;
+  let startY = 0;
+  els.chunkText.addEventListener(
+    "touchstart",
+    (event) => {
+      if (!document.body.classList.contains("focus-mode")) return;
+      const touch = event.changedTouches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+    },
+    { passive: true },
+  );
+  els.chunkText.addEventListener(
+    "touchend",
+    (event) => {
+      if (!document.body.classList.contains("focus-mode")) return;
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - startX;
+      const deltaY = touch.clientY - startY;
+      if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.4) return;
+      moveChunk(deltaX < 0 ? 1 : -1).catch((error) => showNotice(error.message));
+    },
+    { passive: true },
+  );
+}
+
+function toggleReaderOverlay() {
+  if (!document.body.classList.contains("focus-mode")) return;
+  setReaderOverlayVisible(!state.readerControlsVisible);
+}
+
+function revealReaderOverlay(delay = 2600) {
+  if (!document.body.classList.contains("focus-mode")) return;
+  setReaderOverlayVisible(true, delay);
+}
+
+function setReaderOverlayVisible(visible, delay = 0) {
+  state.readerControlsVisible = visible;
+  const inFocusMode = document.body.classList.contains("focus-mode");
+  els.readerOverlay.classList.toggle("hidden", !inFocusMode && !visible);
+  if (inFocusMode) {
+    els.readerOverlay.classList.remove("hidden");
+  }
+  document.body.classList.toggle("reader-controls-visible", visible);
+  if (state.readerOverlayTimer) {
+    window.clearTimeout(state.readerOverlayTimer);
+    state.readerOverlayTimer = null;
+  }
+  if (visible && delay) {
+    state.readerOverlayTimer = window.setTimeout(() => setReaderOverlayVisible(false), delay);
+  }
+}
+
+function setFocusMode(enabled) {
+  els.focusModeToggle.checked = enabled;
+  document.body.classList.toggle("focus-mode", enabled);
+  els.exitFocusMode.classList.toggle("hidden", !enabled);
+  if (enabled) {
+    navigate("reader");
+    els.welcomeBonus.classList.add("hidden");
+    applyReaderSettings();
+    updateImmersiveReaderText().catch((error) => showNotice(error.message));
+    revealReaderOverlay(2600);
+  } else {
+    setReaderOverlayVisible(false);
+  }
+  syncViewportHeight();
+}
+
+async function init() {
+  setupTelegram();
+  loadReaderSettings();
+  bindEvents();
+  await loadCurrentUser();
+  navigate("home");
+  await loadBooks();
+}
+
+init().catch((error) => showNotice(error.message));
