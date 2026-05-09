@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <title>Uncat Dashboard</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/admin/admin.css?v=admin-4" />
+  </head>
+  <body>
+    <main class="admin-shell">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">Quiet Reader Admin</p>
+          <h1>Uncat Dashboard</h1>
+        </div>
+        <button id="refreshDashboard" class="icon-button" title="Обновить" aria-label="Обновить">↻</button>
+      </header>
+
+      <section id="notice" class="notice hidden"></section>
+
+      <section class="metrics-grid" aria-label="Ключевые метрики">
+        <article class="metric">
+          <span>Пользователи</span>
+          <strong id="totalUsers">0</strong>
+        </article>
+        <article class="metric">
+          <span>Книги</span>
+          <strong id="totalBooks">0</strong>
+        </article>
+        <article class="metric">
+          <span>Welcome Bonus</span>
+          <strong id="totalBonuses">0</strong>
+        </article>
+        <article class="metric">
+          <span>Прогресс</span>
+          <strong id="totalProgress">0</strong>
+        </article>
+      </section>
+
+      <section class="panel message-panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Bot broadcast</p>
+            <h2>Сообщение пользователям</h2>
+          </div>
+          <select id="messageAudience" class="select-input" aria-label="Получатель">
+            <option value="user">Один пользователь</option>
+            <option value="all">Все пользователи</option>
+          </select>
+        </div>
+        <div class="message-controls">
+          <select id="messageUser" class="select-input" aria-label="Пользователь"></select>
+          <textarea id="messageText" class="text-area" maxlength="2000" placeholder="Текст сообщения от бота"></textarea>
+          <button id="sendMessage" class="primary-button">Отправить</button>
+        </div>
+        <div id="messageResult" class="message-result hidden"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Reading state</p>
+            <h2>Кто где читает</h2>
+          </div>
+        </div>
+        <div id="progressList" class="data-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Uploads</p>
+            <h2>Кто что добавил</h2>
+          </div>
+        </div>
+        <div id="booksList" class="data-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Users</p>
+            <h2>Пользователи</h2>
+          </div>
+        </div>
+        <div id="usersList" class="data-list"></div>
+      </section>
+    </main>
+    <script src="/admin/admin.js?v=admin-4"></script>
+  </body>
+</html>

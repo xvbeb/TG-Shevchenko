@@ -5,38 +5,52 @@ import logging
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
-from aiogram.types import KeyboardButton, Message, ReplyKeyboardMarkup, WebAppInfo
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardRemove, WebAppInfo
 
 from app.config import get_settings
+from app.services.books import UNCAT_TELEGRAM_ID
 
 
 settings = get_settings()
 
 
-def build_main_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
+def build_main_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
+    inline_keyboard = [
+        [
+            InlineKeyboardButton(
+                text="Открыть reader",
+                web_app=WebAppInfo(url=settings.telegram_webapp_url),
+            )
+        ]
+    ]
+    if is_admin:
+        inline_keyboard.append(
             [
-                KeyboardButton(
-                    text="Открыть reader",
-                    web_app=WebAppInfo(url=settings.telegram_webapp_url),
+                InlineKeyboardButton(
+                    text="Uncat dashboard",
+                    web_app=WebAppInfo(url=_admin_webapp_url()),
                 )
             ]
-        ],
-        resize_keyboard=True,
-        input_field_placeholder="Открой мини-приложение и продолжи чтение",
-    )
+        )
+
+    return InlineKeyboardMarkup(inline_keyboard=inline_keyboard)
 
 
 async def handle_start(message: Message) -> None:
+    is_admin = str(message.from_user.id) == UNCAT_TELEGRAM_ID if message.from_user else False
+    await message.answer("Обновляю кнопки Mini App.", reply_markup=ReplyKeyboardRemove())
     await message.answer(
         "Привет. Я помогу возвращаться к книге маленькими спокойными сессиями.",
-        reply_markup=build_main_keyboard(),
+        reply_markup=build_main_keyboard(is_admin=is_admin),
     )
 
 
 async def handle_web_app_data(message: Message) -> None:
     await message.answer("Данные из Mini App получены. Можно продолжать чтение.")
+
+
+def _admin_webapp_url() -> str:
+    return settings.telegram_webapp_url.rstrip("/") + "/admin/"
 
 
 async def main() -> None:

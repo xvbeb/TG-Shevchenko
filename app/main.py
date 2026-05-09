@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import books, sessions, users
+from app.routers import admin, books, sessions, users
 
 
 settings = get_settings()
@@ -22,6 +22,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
+app.include_router(admin.router)
 app.include_router(books.router)
 app.include_router(sessions.router)
 app.include_router(users.router)
