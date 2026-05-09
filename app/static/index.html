@@ -7,15 +7,27 @@
       content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover"
     />
     <meta name="color-scheme" content="dark light" />
-    <title>Quiet Reader</title>
+    <title>ТГ Шевченко</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/styles.css?v=reader-pages-1" />
+    <link rel="stylesheet" href="/styles.css?v=product-2" />
   </head>
   <body>
+    <div id="appLoading" class="app-loading" aria-live="polite">
+      <div class="loading-card">
+        <div class="loading-emoji" aria-hidden="true">📚</div>
+        <p class="soft-label">ТГ Шевченко</p>
+        <h2 data-i18n="loadingTitle">Собираю тихое место для чтения</h2>
+        <div class="loading-lines">
+          <span class="loading-line" data-i18n="loadingLine1">Проверяю книги</span>
+          <span class="loading-line" data-i18n="loadingLine2">Вспоминаю прогресс</span>
+          <span class="loading-line" data-i18n="loadingLine3">Готовлю мягкий вход</span>
+        </div>
+      </div>
+    </div>
     <div class="app-shell">
       <header class="app-topbar">
         <div class="topbar-copy">
-          <p id="topEyebrow" class="top-eyebrow">quiet reader</p>
+          <p id="topEyebrow" class="top-eyebrow">ТГ Шевченко</p>
           <h1 id="screenTitle">Домой</h1>
         </div>
         <button id="refreshBooks" class="round-button" title="Обновить" aria-label="Обновить">↻</button>
@@ -245,6 +257,41 @@
         <button class="nav-item" data-screen-target="settings"><span>⚙️</span><b data-i18n="navSettings">Settings</b></button>
       </nav>
     </div>
-    <script src="/app.js?v=reader-pages-1"></script>
+    <dialog id="editBookDialog" class="edit-dialog">
+      <form id="editBookForm" method="dialog" class="edit-card">
+        <div class="section-heading">
+          <div>
+            <p class="soft-label" data-i18n="editBookTitle">Книга</p>
+            <h2 id="editBookHeading">Редактировать</h2>
+          </div>
+          <button id="closeEditBook" class="round-button" type="button" aria-label="Закрыть">×</button>
+        </div>
+        <label class="edit-field">
+          <span data-i18n="editTitleLabel">Название</span>
+          <input id="editTitle" class="text-input" type="text" />
+        </label>
+        <label class="edit-field">
+          <span data-i18n="editAuthorLabel">Автор</span>
+          <input id="editAuthor" class="text-input" type="text" />
+        </label>
+        <label class="file-picker">
+          <input id="editCover" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
+          <span data-i18n="editCoverLabel">Обложка</span>
+        </label>
+        <label class="toggle-row edit-remove-cover">
+          <input id="editRemoveCover" type="checkbox" />
+          <span data-i18n="removeCover">Убрать обложку</span>
+        </label>
+        <div class="action-row">
+          <button id="cancelEditBook" class="secondary-button" type="button" data-i18n="cancel">Отмена</button>
+          <button id="saveBookEdit" class="primary-button" type="submit" data-i18n="saveChanges">Сохранить</button>
+        </div>
+      </form>
+    </dialog>
+    <div id="streakToast" class="streak-toast hidden" aria-live="polite">
+      <div class="streak-emoji-burst" aria-hidden="true"><span>🔥</span><span>✨</span><span>📖</span><span>🌟</span></div>
+      <strong id="streakToastText">День засчитан</strong>
+    </div>
+    <script src="/app.js?v=product-2"></script>
   </body>
 </html>

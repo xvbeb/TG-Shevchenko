@@ -26,3 +26,4 @@ class User(Base):
     books = relationship("Book", back_populates="user", cascade="all, delete-orphan")
     progress = relationship("ReadingProgress", back_populates="user", cascade="all, delete-orphan")
     sessions = relationship("ReadingSession", back_populates="user", cascade="all, delete-orphan")
+    activity = relationship("ReadingActivity", back_populates="user", cascade="all, delete-orphan")

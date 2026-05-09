@@ -21,7 +21,9 @@ from app.services.books import (
     get_user_book,
     list_user_books,
     search_book_chunks,
+    update_book_metadata,
 )
+from app.services.activity import record_reading_activity
 from app.services.progress import touch_last_opened, update_progress
 from app.services.welcome_bonus import create_welcome_bonus
 
@@ -67,6 +69,7 @@ def get_book(
 def read_book(
     book_id: int,
     chunk_index: Optional[int] = Query(default=None, ge=0),
+    track_activity: bool = Query(default=False),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -75,6 +78,7 @@ def read_book(
     selected_index = clamp_chunk_index(book, chunk_index if chunk_index is not None else progress.current_chunk_index)
     chunk = get_chunk(db, book.id, selected_index)
     touch_last_opened(db, progress)
+    streak = record_reading_activity(db, current_user) if track_activity else None
     return ReadResponse(
         book=BookRead.model_validate(book),
         chunk=chunk,
@@ -82,6 +86,30 @@ def read_book(
         total_chunks=book.total_chunks,
         has_previous=selected_index > 0,
         has_next=selected_index < max(0, book.total_chunks - 1),
+        streak=streak,
+    )
+
+
+@router.patch("/{book_id}", response_model=BookRead)
+async def update_book(
+    book_id: int,
+    title: Optional[str] = Form(default=None),
+    author: Optional[str] = Form(default=None),
+    remove_cover: bool = Form(default=False),
+    cover: Optional[UploadFile] = File(default=None),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    cover_content = await cover.read() if cover else None
+    return update_book_metadata(
+        db,
+        current_user,
+        book_id,
+        title=title,
+        author=author,
+        remove_cover=remove_cover,
+        cover_content=cover_content,
+        cover_content_type=cover.content_type if cover else None,
     )
 
 

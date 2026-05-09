@@ -11,7 +11,7 @@ from zipfile import ZipFile
 from bs4 import BeautifulSoup
 from ebooklib import ITEM_DOCUMENT, ITEM_IMAGE, epub
 
-from app.utils.text import count_words, normalize_text, split_paragraphs
+from app.utils.text import build_reading_chunks, count_words, normalize_text, split_paragraphs
 
 
 @dataclass
@@ -41,7 +41,7 @@ def _parse_txt(filename: str, content: bytes, title: Optional[str], author: Opti
     except UnicodeDecodeError:
         text = content.decode("latin-1")
 
-    chunks = split_paragraphs(text)
+    chunks = build_reading_chunks(split_paragraphs(text))
     return ParsedBook(
         title=clean_book_title(title or Path(filename).stem, filename),
         author=author,
@@ -70,12 +70,13 @@ def _parse_epub(filename: str, content: bytes, title: Optional[str], author: Opt
             if text:
                 paragraphs.append(text)
 
+    chunks = build_reading_chunks(paragraphs)
     return ParsedBook(
         title=clean_book_title(title or metadata_title or Path(filename).stem, filename),
         author=author or metadata_author,
         source_type="epub",
-        chunks=paragraphs,
-        total_words=sum(count_words(chunk) for chunk in paragraphs),
+        chunks=chunks,
+        total_words=sum(count_words(chunk) for chunk in chunks),
         cover_image_data_url=cover_image_data_url,
     )
 
@@ -95,12 +96,13 @@ def _parse_fb2(filename: str, content: bytes, title: Optional[str], author: Opti
         if value:
             paragraphs.append(value)
 
+    chunks = build_reading_chunks(paragraphs)
     return ParsedBook(
         title=clean_book_title(title or metadata_title or _strip_known_extensions(filename), filename),
         author=author or metadata_author,
         source_type="fb2",
-        chunks=paragraphs,
-        total_words=sum(count_words(chunk) for chunk in paragraphs),
+        chunks=chunks,
+        total_words=sum(count_words(chunk) for chunk in chunks),
         cover_image_data_url=cover_image_data_url,
     )
 

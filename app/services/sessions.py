@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.models import ReadingProgress, ReadingSession, User
 from app.schemas.session import SessionEnd, SessionStart
+from app.services.activity import record_reading_activity
 from app.services.books import clamp_chunk_index, get_book_progress, get_user_book
 
 
@@ -25,6 +26,7 @@ def start_session(db: Session, user: User, payload: SessionStart) -> ReadingSess
     progress.last_opened_at = datetime.now(timezone.utc)
     db.add(session)
     db.commit()
+    record_reading_activity(db, user)
     db.refresh(session)
     return session
 

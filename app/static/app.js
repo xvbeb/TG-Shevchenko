@@ -1,7 +1,7 @@
 const tg = window.Telegram?.WebApp;
 
 const SCREEN_META = {
-  home: { titleKey: "screenHome", eyebrow: "quiet reader" },
+  home: { titleKey: "screenHome", eyebrow: "ТГ Шевченко" },
   library: { titleKey: "screenLibrary", eyebrow: "cloud books" },
   reader: { titleKey: "screenReader", eyebrow: "one chunk" },
   progress: { titleKey: "screenProgress", eyebrow: "gentle pace" },
@@ -35,6 +35,21 @@ const I18N = {
     titlePlaceholder: "Название, если нужно",
     uploading: "Загрузка",
     uploadButton: "Загрузить",
+    editBook: "Редактировать",
+    editBookTitle: "Книга",
+    editTitleLabel: "Название",
+    editAuthorLabel: "Автор",
+    editCoverLabel: "Обложка",
+    removeCover: "Убрать обложку",
+    cancel: "Отмена",
+    saveChanges: "Сохранить",
+    bookUpdated: "Книга обновлена.",
+    loadingTitle: "Собираю тихое место для чтения",
+    loadingLine1: "Проверяю книги",
+    loadingLine2: "Вспоминаю прогресс",
+    loadingLine3: "Готовлю мягкий вход",
+    streakDone: "День засчитан",
+    streakDays: "{count} дн.",
     libraryTitle: "Библиотека",
     readerLabel: "Reader",
     chooseBook: "Выбери книгу",
@@ -140,6 +155,21 @@ const I18N = {
     titlePlaceholder: "Назва, якщо потрібно",
     uploading: "Завантаження",
     uploadButton: "Завантажити",
+    editBook: "Редагувати",
+    editBookTitle: "Книжка",
+    editTitleLabel: "Назва",
+    editAuthorLabel: "Автор",
+    editCoverLabel: "Обкладинка",
+    removeCover: "Прибрати обкладинку",
+    cancel: "Скасувати",
+    saveChanges: "Зберегти",
+    bookUpdated: "Книжку оновлено.",
+    loadingTitle: "Збираю тихе місце для читання",
+    loadingLine1: "Перевіряю книжки",
+    loadingLine2: "Згадую прогрес",
+    loadingLine3: "Готую м'який вхід",
+    streakDone: "День зараховано",
+    streakDays: "{count} дн.",
     libraryTitle: "Бібліотека",
     readerLabel: "Reader",
     chooseBook: "Вибери книжку",
@@ -237,6 +267,8 @@ const state = {
   activeSessionId: null,
   chunkCache: new Map(),
   searchResults: [],
+  streakStatus: null,
+  editBook: null,
   readerControlsVisible: false,
   readerOverlayTimer: null,
   readerSettings: {
@@ -253,10 +285,12 @@ const state = {
   readerPrefetchPromise: null,
   readerReflowTimer: null,
   readerMeasure: null,
+  readerLayoutVersion: 0,
   readerRangeSize: 32,
   readerPrefetchThreshold: 7,
   uploadProgress: 0,
   isUploading: false,
+  isEditingBook: false,
   activity: [],
   stats: {
     sessions: 0,
@@ -280,11 +314,23 @@ const els = {
   recentBooks: document.querySelector("#recentBooks"),
   bookFile: document.querySelector("#bookFile"),
   bookTitle: document.querySelector("#bookTitle"),
+  appLoading: document.querySelector("#appLoading"),
+  loadingLines: document.querySelectorAll(".loading-line"),
   uploadStatus: document.querySelector("#uploadStatus"),
   uploadProgress: document.querySelector("#uploadProgress"),
   uploadProgressFill: document.querySelector("#uploadProgressFill"),
   uploadProgressValue: document.querySelector("#uploadProgressValue"),
   uploadBook: document.querySelector("#uploadBook"),
+  editBookDialog: document.querySelector("#editBookDialog"),
+  editBookForm: document.querySelector("#editBookForm"),
+  editBookHeading: document.querySelector("#editBookHeading"),
+  editTitle: document.querySelector("#editTitle"),
+  editAuthor: document.querySelector("#editAuthor"),
+  editCover: document.querySelector("#editCover"),
+  editRemoveCover: document.querySelector("#editRemoveCover"),
+  closeEditBook: document.querySelector("#closeEditBook"),
+  cancelEditBook: document.querySelector("#cancelEditBook"),
+  saveBookEdit: document.querySelector("#saveBookEdit"),
   booksList: document.querySelector("#booksList"),
   bookCount: document.querySelector("#bookCount"),
   bookMeta: document.querySelector("#bookMeta"),
@@ -317,6 +363,8 @@ const els = {
   readerZonesToggle: document.querySelector("#readerZonesToggle"),
   focusModeToggle: document.querySelector("#focusModeToggle"),
   streakValue: document.querySelector("#streakValue"),
+  streakToast: document.querySelector("#streakToast"),
+  streakToastText: document.querySelector("#streakToastText"),
   weekStreak: document.querySelector("#weekStreak"),
   sessionsValue: document.querySelector("#sessionsValue"),
   chunksValue: document.querySelector("#chunksValue"),
@@ -342,6 +390,19 @@ function authHeaders() {
 async function api(path, options = {}) {
   const headers = { ...authHeaders(), ...(options.headers || {}) };
   const response = await fetch(path, { ...options, headers });
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `Request failed: ${response.status}`);
+  }
+  return response.json();
+}
+
+async function apiForm(path, form, options = {}) {
+  const response = await fetch(path, {
+    method: options.method || "POST",
+    body: form,
+    headers: { ...authHeaders(), ...(options.headers || {}) },
+  });
   if (!response.ok) {
     const detail = await response.text();
     throw new Error(detail || `Request failed: ${response.status}`);
@@ -393,6 +454,20 @@ async function loadCurrentUser() {
   state.displayName = user.display_name || user.username || state.displayName;
   const language = user.preferences?.language || "ru";
   setLanguage(language);
+}
+
+async function loadStreak(options = {}) {
+  try {
+    const previousCompleted = state.streakStatus?.completed_today;
+    const streak = await api("/users/me/streak");
+    state.streakStatus = streak;
+    renderProgress();
+    if (options.celebrate && streak.completed_today && !previousCompleted) {
+      showStreakCelebration(streak.streak_days);
+    }
+  } catch (error) {
+    state.streakStatus = null;
+  }
 }
 
 async function saveLanguage(language) {
@@ -567,7 +642,7 @@ async function openBook(bookId, options = { switchToReader: true }) {
   state.currentChunkIndex = state.activeBookDetail.current_chunk_index || 0;
   state.totalChunks = state.activeBookDetail.total_chunks || book.total_chunks || 0;
   await loadWelcomeBonus(bookId);
-  await readChunk(bookId, state.currentChunkIndex);
+  await readChunk(bookId, state.currentChunkIndex, { trackActivity: Boolean(options.switchToReader) });
   renderAll();
 
   if (options.switchToReader) {
@@ -584,17 +659,19 @@ async function loadWelcomeBonus(bookId) {
   }
 }
 
-async function readChunk(bookId, chunkIndex = state.currentChunkIndex) {
+async function readChunk(bookId, chunkIndex = state.currentChunkIndex, options = {}) {
   const safeIndex = Math.max(0, Math.min(chunkIndex, Math.max(0, state.totalChunks - 1)));
   const cacheKey = cacheKeyFor(bookId, safeIndex);
-  const cached = state.chunkCache.get(cacheKey);
-  const data = cached || (await api(`/books/${bookId}/read?chunk_index=${safeIndex}`));
+  const cached = options.trackActivity ? null : state.chunkCache.get(cacheKey);
+  const activityParam = options.trackActivity ? "&track_activity=true" : "";
+  const data = cached || (await api(`/books/${bookId}/read?chunk_index=${safeIndex}${activityParam}`));
 
   state.chunkCache.set(cacheKey, data);
   state.activeBook = data.book;
   state.currentChunk = data.chunk;
   state.currentChunkIndex = data.current_chunk_index;
   state.totalChunks = data.total_chunks;
+  if (data.streak) handleStreakStatus(data.streak);
 
   if (!shouldUseVisualReaderPages()) {
     resetReaderPages();
@@ -610,6 +687,7 @@ function resetReaderPages() {
   state.readerBufferedFromChunkIndex = null;
   state.readerBufferedUntilChunkIndex = -1;
   state.readerPrefetchPromise = null;
+  state.readerLayoutVersion += 1;
 }
 
 function preloadAdjacentChunks(bookId, currentIndex) {
@@ -743,7 +821,8 @@ function changeReaderFont(delta) {
   state.readerSettings.fontStep = Math.max(-2, Math.min(3, state.readerSettings.fontStep + delta));
   applyReaderSettings();
   saveReaderSettings();
-  repaginateLoadedReaderPages().catch((error) => showNotice(error.message));
+  resetReaderPages();
+  updateImmersiveReaderText({ forceRebuild: true }).catch((error) => showNotice(error.message));
   revealReaderOverlay();
 }
 
@@ -753,7 +832,8 @@ function cycleReaderTheme() {
   state.readerSettings.theme = themes[(index + 1) % themes.length];
   applyReaderSettings();
   saveReaderSettings();
-  scheduleReaderRepagination();
+  resetReaderPages();
+  updateImmersiveReaderText({ forceRebuild: true }).catch((error) => showNotice(error.message));
   revealReaderOverlay();
 }
 
@@ -805,6 +885,7 @@ async function moveReaderPage(delta) {
 
 async function ensureReaderPages() {
   if (state.readerSettings.mode !== "page" || !state.activeBook) return;
+  await waitForReaderLayout();
   if (state.readerPages.length) {
     showReaderPage(state.readerPageCursor);
     return;
@@ -820,6 +901,7 @@ async function prefetchReaderPages() {
   if (!state.activeBook || state.readerPrefetchPromise) {
     return state.readerPrefetchPromise;
   }
+  if (state.readerBufferedFromChunkIndex === null || state.readerBufferedUntilChunkIndex < 0) return null;
   if (state.readerBufferedUntilChunkIndex >= state.totalChunks - 1) return null;
   const nextStart = Math.max(0, state.readerBufferedUntilChunkIndex + 1);
   state.readerPrefetchPromise = loadReaderPageRange(nextStart, { appendOnly: true }).finally(() => {
@@ -830,9 +912,11 @@ async function prefetchReaderPages() {
 
 async function loadReaderPageRange(startChunkIndex, options = {}) {
   const anchor = getCurrentReaderPageAnchor();
+  const layoutVersion = state.readerLayoutVersion;
   const data = await api(
     `/books/${state.activeBook.id}/read-range?start_chunk_index=${startChunkIndex}&limit=${state.readerRangeSize}`,
   );
+  if (layoutVersion !== state.readerLayoutVersion) return;
   const chunks = data.chunks || [];
   if (!chunks.length) return;
   chunks.forEach((chunk) => {
@@ -876,8 +960,8 @@ function paginateReaderChunks(chunks) {
   const current = createEmptyReaderPage();
 
   chunks.forEach((chunk) => {
-    getChunkParagraphs(chunk).forEach((paragraph) => {
-      appendParagraphToReaderPages(paragraph, chunk.chunk_index, current, pages, metrics);
+    getChunkParagraphs(chunk).forEach((block) => {
+      appendParagraphToReaderPages(block, chunk.chunk_index, current, pages, metrics);
     });
   });
 
@@ -890,68 +974,79 @@ function getChunkParagraphs(chunk) {
   if (!text) return [];
   return text
     .split(/\n\s*\n/g)
-    .map((paragraph) => paragraph.replace(/\s*\n\s*/g, " ").trim())
-    .filter(Boolean);
+    .map((paragraph) => normalizeReaderParagraph(paragraph))
+    .filter(Boolean)
+    .map((paragraph) => ({ text: paragraph, continuation: false }));
+}
+
+function normalizeReaderParagraph(text) {
+  return String(text || "")
+    .replace(/[ \t]*\n[ \t]*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function createEmptyReaderPage() {
   return {
-    text: "",
+    blocks: [],
     startChunkIndex: null,
     endChunkIndex: null,
   };
 }
 
-function appendParagraphToReaderPages(paragraph, chunkIndex, current, pages, metrics) {
-  if (!paragraph) return;
-  const candidate = joinReaderPageText(current.text, paragraph);
+function appendParagraphToReaderPages(block, chunkIndex, current, pages, metrics) {
+  if (!block?.text) return;
+  const candidate = [...current.blocks, block];
   if (readerTextFits(candidate, metrics)) {
-    addTextToReaderPage(current, paragraph, chunkIndex);
+    addBlockToReaderPage(current, block, chunkIndex);
     return;
   }
 
-  if (current.text) {
+  if (current.blocks.length) {
     commitReaderPage(current, pages);
   }
 
-  if (readerTextFits(paragraph, metrics)) {
-    addTextToReaderPage(current, paragraph, chunkIndex);
+  if (readerTextFits([block], metrics)) {
+    addBlockToReaderPage(current, block, chunkIndex);
     return;
   }
 
-  appendLongParagraphByWords(paragraph, chunkIndex, current, pages, metrics);
+  appendLongParagraphByWords(block.text, chunkIndex, current, pages, metrics);
 }
 
 function appendLongParagraphByWords(paragraph, chunkIndex, current, pages, metrics) {
   let words = paragraph.split(/\s+/u).filter(Boolean);
+  let isContinuation = false;
   while (words.length) {
-    const count = findFittingWordCount(words, current.text, metrics);
+    const count = findFittingWordCount(words, current.blocks, isContinuation, metrics);
     if (count === 0) {
-      if (current.text) {
+      if (current.blocks.length) {
         commitReaderPage(current, pages);
         continue;
       }
-      addTextToReaderPage(current, words.shift(), chunkIndex);
+      addBlockToReaderPage(current, { text: words.shift(), continuation: isContinuation }, chunkIndex);
       commitReaderPage(current, pages);
+      isContinuation = true;
       continue;
     }
 
-    addTextToReaderPage(current, words.slice(0, count).join(" "), chunkIndex);
+    addBlockToReaderPage(current, { text: words.slice(0, count).join(" "), continuation: isContinuation }, chunkIndex);
     words = words.slice(count);
     if (words.length) {
       commitReaderPage(current, pages);
+      isContinuation = true;
     }
   }
 }
 
-function findFittingWordCount(words, currentText, metrics) {
+function findFittingWordCount(words, currentBlocks, continuation, metrics) {
   let low = 1;
   let high = words.length;
   let best = 0;
 
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
-    const candidate = joinReaderPageText(currentText, words.slice(0, mid).join(" "));
+    const candidate = [...currentBlocks, { text: words.slice(0, mid).join(" "), continuation }];
     if (readerTextFits(candidate, metrics)) {
       best = mid;
       low = mid + 1;
@@ -963,26 +1058,27 @@ function findFittingWordCount(words, currentText, metrics) {
   return best;
 }
 
-function addTextToReaderPage(page, text, chunkIndex) {
+function addBlockToReaderPage(page, block, chunkIndex) {
   if (page.startChunkIndex === null) page.startChunkIndex = chunkIndex;
   page.endChunkIndex = chunkIndex;
-  page.text = joinReaderPageText(page.text, text);
+  page.blocks.push(block);
 }
 
 function commitReaderPage(page, pages) {
-  if (!page.text) return;
+  if (!page.blocks.length) return;
   pages.push({
-    text: page.text,
+    blocks: page.blocks.map((block) => ({ ...block })),
+    text: blocksToReaderText(page.blocks),
     startChunkIndex: page.startChunkIndex,
     endChunkIndex: page.endChunkIndex,
   });
-  page.text = "";
+  page.blocks = [];
   page.startChunkIndex = null;
   page.endChunkIndex = null;
 }
 
-function joinReaderPageText(currentText, nextText) {
-  return currentText ? `${currentText}\n\n${nextText}` : nextText;
+function blocksToReaderText(blocks) {
+  return blocks.map((block) => block.text).join("\n\n");
 }
 
 function getReaderVisualMetrics() {
@@ -997,8 +1093,7 @@ function getReaderVisualMetrics() {
   const contentWidth = Math.max(120, els.chunkText.clientWidth - paddingX);
   const contentHeight = Math.max(80, els.chunkText.clientHeight - paddingY);
   const maxTextWidth = parseCssPixels(textStyle.maxWidth, contentWidth);
-  const measuredTextWidth = els.chunkTextValue.getBoundingClientRect().width;
-  const width = Math.max(120, Math.min(contentWidth, maxTextWidth, measuredTextWidth || contentWidth));
+  const width = Math.max(120, Math.min(contentWidth, maxTextWidth));
 
   return {
     width,
@@ -1014,9 +1109,9 @@ function parseCssPixels(value, fallback = 0) {
 function readerTextFits(text, metrics) {
   const measure = getReaderMeasure();
   measure.root.style.width = `${metrics.width}px`;
-  measure.span.style.width = `${metrics.width}px`;
-  measure.span.textContent = text || " ";
-  return measure.span.scrollHeight <= metrics.height + 1;
+  measure.content.style.width = `${metrics.width}px`;
+  renderReaderBlocks(measure.content, Array.isArray(text) ? text : [{ text: text || " ", continuation: false }]);
+  return measure.content.scrollHeight <= metrics.height + 1;
 }
 
 function getReaderMeasure() {
@@ -1024,10 +1119,11 @@ function getReaderMeasure() {
 
   const root = document.createElement("article");
   root.className = "chunk-text reader-pagination-measure";
-  const span = document.createElement("span");
-  root.append(span);
+  const content = document.createElement("span");
+  content.className = "reader-page-content";
+  root.append(content);
   document.body.append(root);
-  state.readerMeasure = { root, span };
+  state.readerMeasure = { root, content };
   return state.readerMeasure;
 }
 
@@ -1090,6 +1186,12 @@ function shouldUseVisualReaderPages() {
   return document.body.classList.contains("focus-mode") && state.readerSettings.mode === "page" && Boolean(state.activeBook);
 }
 
+function waitForReaderLayout() {
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.requestAnimationFrame(resolve));
+  });
+}
+
 function showReaderPage(cursor) {
   const page = state.readerPages[cursor];
   if (!page) return;
@@ -1099,7 +1201,7 @@ function showReaderPage(cursor) {
   if (cachedStart?.chunk) {
     state.currentChunk = cachedStart.chunk;
   }
-  els.chunkTextValue.textContent = page.text;
+  renderReaderBlocks(els.chunkTextValue, page.blocks || [{ text: page.text || "", continuation: false }]);
   const progress = state.totalChunks ? ((page.endChunkIndex + 1) / state.totalChunks) * 100 : 0;
   els.progressMeta.textContent = state.totalChunks ? `${page.startChunkIndex + 1} / ${state.totalChunks}` : "0 / 0";
   els.progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
@@ -1107,6 +1209,28 @@ function showReaderPage(cursor) {
   els.tapNextChunk.disabled = cursor >= state.readerPages.length - 1 && state.readerBufferedUntilChunkIndex >= state.totalChunks - 1;
   renderReaderProgressMini(progress);
   preloadAdjacentChunks(state.activeBook.id, page.endChunkIndex);
+}
+
+function renderReaderBlocks(container, blocks) {
+  container.replaceChildren();
+  blocks.forEach((block) => {
+    if (!block?.text) return;
+    const paragraph = document.createElement("p");
+    paragraph.className = "reader-paragraph";
+    paragraph.classList.toggle("continuation", Boolean(block.continuation));
+    paragraph.textContent = block.text;
+    container.append(paragraph);
+  });
+}
+
+function renderPlainReaderText(text) {
+  const blocks = String(text || t("readerEmpty"))
+    .replace(/\r\n?/g, "\n")
+    .split(/\n\s*\n/g)
+    .map((paragraph) => normalizeReaderParagraph(paragraph))
+    .filter(Boolean)
+    .map((paragraph) => ({ text: paragraph, continuation: false }));
+  renderReaderBlocks(els.chunkTextValue, blocks.length ? blocks : [{ text: t("readerEmpty"), continuation: false }]);
 }
 
 async function moveChunk(delta) {
@@ -1120,7 +1244,7 @@ async function moveChunk(delta) {
   }
   const nextIndex = Math.max(0, Math.min(state.totalChunks - 1, state.currentChunkIndex + delta));
   if (nextIndex === state.currentChunkIndex) return;
-  await readChunk(state.activeBook.id, nextIndex);
+  await readChunk(state.activeBook.id, nextIndex, { trackActivity: true });
 }
 
 async function saveProgress() {
@@ -1170,10 +1294,40 @@ async function startSession(minutes = 3) {
   });
   state.activeSessionId = session.id;
   state.stats.sessions += 1;
+  await loadStreak({ celebrate: true });
   addActivity(t("sessionStarted", { minutes }));
   navigate("reader");
   renderProgress();
   showNotice(t("sessionNotice", { minutes }));
+}
+
+function handleStreakStatus(streak) {
+  const previousCompleted = state.streakStatus?.completed_today;
+  state.streakStatus = streak;
+  renderProgress();
+  if (streak.just_completed_today && !previousCompleted) {
+    showStreakCelebration(streak.streak_days);
+  }
+}
+
+function showStreakCelebration(days) {
+  if (!els.streakToast) return;
+  els.streakToastText.textContent = `${t("streakDone")} · ${t("streakDays", { count: days })}`;
+  els.streakToast.classList.remove("hidden");
+  els.streakToast.classList.remove("play");
+  void els.streakToast.offsetWidth;
+  els.streakToast.classList.add("play");
+  window.setTimeout(() => els.streakToast.classList.add("hidden"), 2600);
+}
+
+function setLoadingVisible(visible) {
+  if (!els.appLoading) return;
+  els.appLoading.classList.toggle("is-hidden", !visible);
+  if (!visible) {
+    window.setTimeout(() => els.appLoading.classList.add("hidden"), 360);
+  } else {
+    els.appLoading.classList.remove("hidden");
+  }
 }
 
 async function changeDepth(depth) {
@@ -1237,7 +1391,7 @@ function renderBookCollection(container, books, compact) {
   }
 
   books.forEach((book) => {
-    const item = document.createElement("button");
+    const item = document.createElement(compact ? "button" : "article");
     item.className = `book-card ${state.activeBook?.id === book.id ? "active" : ""}`;
     const cover = document.createElement("span");
     cover.className = "book-cover";
@@ -1267,10 +1421,75 @@ function renderBookCollection(container, books, compact) {
     subtitle.className = "book-subtitle";
     subtitle.textContent = compact ? getCompactBookMeta(book) : getLibraryBookMeta(book);
     copy.append(title, subtitle);
-    item.append(cover, copy);
-    item.addEventListener("click", () => openBook(book.id, { switchToReader: true }).catch((error) => showNotice(error.message)));
+    if (compact) {
+      item.append(cover, copy);
+      item.addEventListener("click", () => openBook(book.id, { switchToReader: true }).catch((error) => showNotice(error.message)));
+    } else {
+      const openButton = document.createElement("button");
+      openButton.className = "book-card-main";
+      openButton.type = "button";
+      openButton.append(cover, copy);
+      openButton.addEventListener("click", () => openBook(book.id, { switchToReader: true }).catch((error) => showNotice(error.message)));
+      const editButton = document.createElement("button");
+      editButton.className = "book-edit-button";
+      editButton.type = "button";
+      editButton.textContent = "✎";
+      editButton.title = t("editBook");
+      editButton.setAttribute("aria-label", t("editBook"));
+      editButton.addEventListener("click", () => openEditBook(book));
+      item.append(openButton, editButton);
+    }
     container.append(item);
   });
+}
+
+function openEditBook(book) {
+  state.editBook = book;
+  els.editBookHeading.textContent = formatBookTitle(book.title);
+  els.editTitle.value = book.title || "";
+  els.editAuthor.value = book.author || "";
+  els.editCover.value = "";
+  els.editRemoveCover.checked = false;
+  if (typeof els.editBookDialog.showModal === "function") {
+    els.editBookDialog.showModal();
+  } else {
+    els.editBookDialog.setAttribute("open", "");
+  }
+}
+
+function closeEditBook() {
+  state.editBook = null;
+  if (typeof els.editBookDialog.close === "function") {
+    els.editBookDialog.close();
+  } else {
+    els.editBookDialog.removeAttribute("open");
+  }
+}
+
+async function saveBookEdit(event) {
+  event.preventDefault();
+  if (!state.editBook || state.isEditingBook) return;
+  const form = new FormData();
+  form.append("title", els.editTitle.value.trim());
+  form.append("author", els.editAuthor.value.trim());
+  form.append("remove_cover", els.editRemoveCover.checked ? "true" : "false");
+  if (els.editCover.files?.[0]) {
+    form.append("cover", els.editCover.files[0]);
+  }
+
+  state.isEditingBook = true;
+  els.saveBookEdit.disabled = true;
+  try {
+    const updated = await apiForm(`/books/${state.editBook.id}`, form, { method: "PATCH" });
+    state.books = state.books.map((book) => (book.id === updated.id ? updated : book));
+    if (state.activeBook?.id === updated.id) state.activeBook = updated;
+    renderAll();
+    closeEditBook();
+    showNotice(t("bookUpdated"));
+  } finally {
+    state.isEditingBook = false;
+    els.saveBookEdit.disabled = false;
+  }
 }
 
 function getBookCoverFallback(book) {
@@ -1299,7 +1518,7 @@ function renderReader() {
   els.bookMeta.textContent = book ? formatBookTitle(book.title) : t("chooseBook");
   els.progressMeta.textContent = state.totalChunks ? `${state.currentChunkIndex + 1} / ${state.totalChunks}` : "0 / 0";
   if (!shouldUseVisualReaderPages() || !state.readerPages.length) {
-    els.chunkTextValue.textContent = state.currentChunk?.text || t("readerEmpty");
+    renderPlainReaderText(state.currentChunk?.text || t("readerEmpty"));
   }
 
   const progress = state.totalChunks ? ((state.currentChunkIndex + 1) / state.totalChunks) * 100 : 0;
@@ -1330,13 +1549,16 @@ function renderReaderProgressMini(progress) {
   els.readerProgressMiniFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
 }
 
-async function updateImmersiveReaderText() {
+async function updateImmersiveReaderText(options = {}) {
   if (!document.body.classList.contains("focus-mode") || !state.activeBook || !state.currentChunk) return;
   if (state.readerSettings.mode === "chunk") {
-    els.chunkTextValue.textContent = state.currentChunk.text || t("readerEmpty");
+    renderPlainReaderText(state.currentChunk.text || t("readerEmpty"));
     return;
   }
 
+  if (options.forceRebuild) {
+    resetReaderPages();
+  }
   await ensureReaderPages();
 }
 
@@ -1356,7 +1578,8 @@ function showUploadedBook(book) {
 }
 
 function renderProgress() {
-  els.streakValue.textContent = state.stats.sessions > 0 ? t("streakOne") : t("streakZero");
+  const streakDays = state.streakStatus?.streak_days || state.currentUser?.gentle_streak_days || 0;
+  els.streakValue.textContent = streakDays === 1 ? t("streakOne") : streakDays ? t("streakDays", { count: streakDays }) : t("streakZero");
   els.sessionsValue.textContent = String(state.stats.sessions);
   els.chunksValue.textContent = String(Math.max(state.currentChunkIndex + (state.activeBook ? 1 : 0), state.stats.savedChunks));
   renderWeekStreak();
@@ -1387,7 +1610,7 @@ function renderWeekStreak() {
     const item = document.createElement("span");
     item.className = "week-streak-day";
     item.classList.toggle("today", index === mondayBasedDay);
-    item.classList.toggle("done", state.stats.sessions > 0 && index === mondayBasedDay);
+    item.classList.toggle("done", Boolean(state.streakStatus?.completed_today) && index === mondayBasedDay);
     item.textContent = label;
     els.weekStreak.append(item);
   });
@@ -1464,7 +1687,7 @@ function renderSearchResults() {
     snippet.textContent = result.snippet;
     item.append(meta, snippet);
     item.addEventListener("click", () => {
-      readChunk(state.activeBook.id, result.chunk_index).catch((error) => showNotice(error.message));
+      readChunk(state.activeBook.id, result.chunk_index, { trackActivity: true }).catch((error) => showNotice(error.message));
       state.searchResults = [];
       renderSearchResults();
     });
@@ -1506,7 +1729,11 @@ function bindEvents() {
     }
   });
   els.continueReading.addEventListener("click", () => {
-    if (state.activeBook) navigate("reader");
+    if (state.activeBook) {
+      readChunk(state.activeBook.id, state.currentChunkIndex, { trackActivity: true })
+        .then(() => navigate("reader"))
+        .catch((error) => showNotice(error.message));
+    }
   });
   els.quickSession.addEventListener("click", () => startSession(3).catch((error) => showNotice(error.message)));
   els.tapPreviousChunk.addEventListener("click", () => moveChunk(-1).catch((error) => showNotice(error.message)));
@@ -1533,6 +1760,12 @@ function bindEvents() {
   });
   els.closeWelcomeBonus.addEventListener("click", () => {
     els.welcomeBonus.classList.add("hidden");
+  });
+  els.editBookForm.addEventListener("submit", (event) => saveBookEdit(event).catch((error) => showNotice(error.message)));
+  els.closeEditBook.addEventListener("click", closeEditBook);
+  els.cancelEditBook.addEventListener("click", closeEditBook);
+  els.editBookDialog.addEventListener("click", (event) => {
+    if (event.target === els.editBookDialog) closeEditBook();
   });
 
   els.navItems.forEach((button) => {
@@ -1632,7 +1865,7 @@ function setFocusMode(enabled) {
     applyReaderSettings();
     syncViewportHeight();
     syncSafeArea();
-    updateImmersiveReaderText().catch((error) => showNotice(error.message));
+    updateImmersiveReaderText({ forceRebuild: true }).catch((error) => showNotice(error.message));
     revealReaderOverlay(2600);
   } else {
     setReaderOverlayVisible(false);
@@ -1644,9 +1877,13 @@ async function init() {
   setupTelegram();
   loadReaderSettings();
   bindEvents();
+  setLoadingVisible(true);
   await loadCurrentUser();
   navigate("home");
+  await loadStreak();
   await loadBooks();
 }
 
-init().catch((error) => showNotice(error.message));
+init()
+  .catch((error) => showNotice(error.message))
+  .finally(() => setLoadingVisible(false));

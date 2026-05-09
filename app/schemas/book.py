@@ -5,6 +5,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.activity import StreakStatus
+
 
 class BookRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -40,6 +42,7 @@ class ReadResponse(BaseModel):
     total_chunks: int
     has_previous: bool
     has_next: bool
+    streak: Optional[StreakStatus] = None
 
 
 class ReadRangeResponse(BaseModel):

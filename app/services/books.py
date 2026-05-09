@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import re
 from typing import Optional
 
@@ -55,6 +56,37 @@ def create_book_from_upload(
         for index, chunk in enumerate(parsed.chunks)
     )
     db.add(ReadingProgress(user_id=user.id, book_id=book.id, current_chunk_index=0))
+    db.commit()
+    db.refresh(book)
+    return book
+
+
+def update_book_metadata(
+    db: Session,
+    user: User,
+    book_id: int,
+    title: Optional[str] = None,
+    author: Optional[str] = None,
+    remove_cover: bool = False,
+    cover_content: Optional[bytes] = None,
+    cover_content_type: Optional[str] = None,
+) -> Book:
+    book = db.scalar(select(Book).where(Book.id == book_id))
+    if not book or not can_user_read_book(user, book):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+    if not can_user_edit_book(user, book):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot edit this book")
+
+    clean_title = title.strip() if title is not None else None
+    if clean_title:
+        book.title = clean_title
+    if author is not None:
+        book.author = author.strip() or None
+    if remove_cover:
+        book.cover_image_data_url = None
+    if cover_content:
+        book.cover_image_data_url = _cover_data_url(cover_content, cover_content_type)
+
     db.commit()
     db.refresh(book)
     return book
@@ -146,6 +178,10 @@ def can_user_read_book(user: User, book: Book) -> bool:
     return is_uncat(user) or book.user_id == user.id or is_public_book(book)
 
 
+def can_user_edit_book(user: User, book: Book) -> bool:
+    return is_uncat(user) or book.user_id == user.id
+
+
 def is_uncat(user: User) -> bool:
     return str(user.telegram_id) == UNCAT_TELEGRAM_ID
 
@@ -171,3 +207,12 @@ def _build_snippet(text: str, terms: list[str]) -> str:
     prefix = "..." if start > 0 else ""
     suffix = "..." if end < len(text) else ""
     return prefix + text[start:end].strip() + suffix
+
+
+def _cover_data_url(content: bytes, content_type: Optional[str]) -> str:
+    if len(content) > 1_500_000:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Cover image is too large")
+    mime = (content_type or "image/jpeg").split(";")[0].strip().lower()
+    if mime not in {"image/jpeg", "image/png", "image/webp", "image/gif"}:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cover must be JPEG, PNG, WebP or GIF")
+    return f"data:{mime};base64,{base64.b64encode(content).decode('ascii')}"
