@@ -85,6 +85,7 @@ const I18N = {
     readerModeChunk: "Chunks",
     readerZones: "Zones",
     readerZonesOff: "Hide zones",
+    readerVisualProgress: "Стр. {page}/{loaded} · фрагм. {chunk}/{total}",
     recapDepth: "Глубина пересказа",
     closeRecap: "Закрыть пересказ",
     mainNav: "Главная навигация",
@@ -189,6 +190,7 @@ const I18N = {
     readerModeChunk: "Chunks",
     readerZones: "Зони",
     readerZonesOff: "Сховати зони",
+    readerVisualProgress: "Стор. {page}/{loaded} · фрагм. {chunk}/{total}",
     recapDepth: "Глибина переказу",
     closeRecap: "Закрити переказ",
     mainNav: "Головна навігація",
@@ -244,10 +246,13 @@ const state = {
     showZones: false,
   },
   readerPages: [],
+  readerLoadedChunks: [],
   readerPageCursor: 0,
-  readerPageOffset: 0,
+  readerBufferedFromChunkIndex: null,
   readerBufferedUntilChunkIndex: -1,
   readerPrefetchPromise: null,
+  readerReflowTimer: null,
+  readerMeasure: null,
   readerRangeSize: 32,
   readerPrefetchThreshold: 7,
   uploadProgress: 0,
@@ -487,6 +492,7 @@ function setupZoomGuard() {
 function syncViewportHeight() {
   const height = tg?.viewportStableHeight || tg?.viewportHeight || window.innerHeight;
   document.documentElement.style.setProperty("--app-height", `${height}px`);
+  scheduleReaderRepagination();
 }
 
 function syncSafeArea() {
@@ -501,6 +507,7 @@ function syncSafeArea() {
   document.documentElement.style.setProperty("--safe-bottom", `${bottom}px`);
   document.documentElement.style.setProperty("--safe-left", `${left}px`);
   document.documentElement.style.setProperty("--safe-right", `${right}px`);
+  scheduleReaderRepagination();
 }
 
 function applyTelegramTheme() {
@@ -589,14 +596,18 @@ async function readChunk(bookId, chunkIndex = state.currentChunkIndex) {
   state.currentChunkIndex = data.current_chunk_index;
   state.totalChunks = data.total_chunks;
 
+  if (!shouldUseVisualReaderPages()) {
+    resetReaderPages();
+  }
   renderReader();
   preloadAdjacentChunks(bookId, state.currentChunkIndex);
 }
 
 function resetReaderPages() {
   state.readerPages = [];
+  state.readerLoadedChunks = [];
   state.readerPageCursor = 0;
-  state.readerPageOffset = 0;
+  state.readerBufferedFromChunkIndex = null;
   state.readerBufferedUntilChunkIndex = -1;
   state.readerPrefetchPromise = null;
 }
@@ -732,8 +743,7 @@ function changeReaderFont(delta) {
   state.readerSettings.fontStep = Math.max(-2, Math.min(3, state.readerSettings.fontStep + delta));
   applyReaderSettings();
   saveReaderSettings();
-  resetReaderPages();
-  updateImmersiveReaderText().catch((error) => showNotice(error.message));
+  repaginateLoadedReaderPages().catch((error) => showNotice(error.message));
   revealReaderOverlay();
 }
 
@@ -743,6 +753,7 @@ function cycleReaderTheme() {
   state.readerSettings.theme = themes[(index + 1) % themes.length];
   applyReaderSettings();
   saveReaderSettings();
+  scheduleReaderRepagination();
   revealReaderOverlay();
 }
 
@@ -771,12 +782,13 @@ async function moveReaderPage(delta) {
 
   const nextCursor = state.readerPageCursor + delta;
   if (nextCursor < 0) {
-    const previousChunk = Math.max(0, state.readerPages[0].startChunkIndex - state.readerRangeSize);
-    if (previousChunk === state.readerPages[0].startChunkIndex) return;
-    resetReaderPages();
-    state.currentChunkIndex = previousChunk;
-    await ensureReaderPages();
-    showReaderPage(0);
+    const firstLoadedChunk = state.readerBufferedFromChunkIndex ?? state.readerPages[0].startChunkIndex;
+    const previousChunk = Math.max(0, firstLoadedChunk - state.readerRangeSize);
+    if (previousChunk === firstLoadedChunk) return;
+    const firstVisibleChunk = state.readerPages[0].startChunkIndex;
+    await loadReaderPageRange(previousChunk);
+    const oldFirstCursor = state.readerPages.findIndex((page) => page.startChunkIndex >= firstVisibleChunk);
+    showReaderPage(Math.max(0, oldFirstCursor - 1));
     return;
   }
 
@@ -793,12 +805,14 @@ async function moveReaderPage(delta) {
 
 async function ensureReaderPages() {
   if (state.readerSettings.mode !== "page" || !state.activeBook) return;
-  if (state.readerPages.length) return;
+  if (state.readerPages.length) {
+    showReaderPage(state.readerPageCursor);
+    return;
+  }
 
   const startIndex = Math.max(0, state.currentChunkIndex);
-  state.readerPageOffset = estimatePageNumberForChunk(startIndex) - 1;
   await loadReaderPageRange(startIndex);
-  showReaderPage(0);
+  showReaderPage(state.readerPageCursor);
   prefetchReaderPages().catch(() => {});
 }
 
@@ -808,13 +822,14 @@ async function prefetchReaderPages() {
   }
   if (state.readerBufferedUntilChunkIndex >= state.totalChunks - 1) return null;
   const nextStart = Math.max(0, state.readerBufferedUntilChunkIndex + 1);
-  state.readerPrefetchPromise = loadReaderPageRange(nextStart).finally(() => {
+  state.readerPrefetchPromise = loadReaderPageRange(nextStart, { appendOnly: true }).finally(() => {
     state.readerPrefetchPromise = null;
   });
   return state.readerPrefetchPromise;
 }
 
-async function loadReaderPageRange(startChunkIndex) {
+async function loadReaderPageRange(startChunkIndex, options = {}) {
+  const anchor = getCurrentReaderPageAnchor();
   const data = await api(
     `/books/${state.activeBook.id}/read-range?start_chunk_index=${startChunkIndex}&limit=${state.readerRangeSize}`,
   );
@@ -830,55 +845,249 @@ async function loadReaderPageRange(startChunkIndex) {
       has_next: chunk.chunk_index < data.total_chunks - 1,
     });
   });
-  const pages = paginateReaderChunks(chunks);
-  state.readerPages.push(...pages);
+  mergeReaderLoadedChunks(chunks);
+  if (options.appendOnly && state.readerPages.length) {
+    state.readerPages.push(...paginateReaderChunks(chunks));
+    state.readerPageCursor = findReaderPageCursor(anchor);
+  } else {
+    rebuildReaderPages(anchor);
+  }
+  state.readerBufferedFromChunkIndex =
+    state.readerBufferedFromChunkIndex === null
+      ? data.start_chunk_index
+      : Math.min(state.readerBufferedFromChunkIndex, data.start_chunk_index);
   state.readerBufferedUntilChunkIndex = Math.max(state.readerBufferedUntilChunkIndex, data.end_chunk_index);
 }
 
+function mergeReaderLoadedChunks(chunks) {
+  const byIndex = new Map(state.readerLoadedChunks.map((chunk) => [chunk.chunk_index, chunk]));
+  chunks.forEach((chunk) => byIndex.set(chunk.chunk_index, chunk));
+  state.readerLoadedChunks = Array.from(byIndex.values()).sort((a, b) => a.chunk_index - b.chunk_index);
+}
+
+function rebuildReaderPages(anchor = getCurrentReaderPageAnchor()) {
+  state.readerPages = paginateReaderChunks(state.readerLoadedChunks);
+  state.readerPageCursor = findReaderPageCursor(anchor);
+}
+
 function paginateReaderChunks(chunks) {
-  const targetChars = getReaderPageTargetChars();
+  const metrics = getReaderVisualMetrics();
   const pages = [];
-  let textParts = [];
-  let charCount = 0;
-  let startChunkIndex = chunks[0]?.chunk_index ?? state.currentChunkIndex;
-  let endChunkIndex = startChunkIndex;
+  const current = createEmptyReaderPage();
 
   chunks.forEach((chunk) => {
-    const text = (chunk.text || "").trim();
-    if (!text) return;
-    const separatorChars = textParts.length ? 2 : 0;
-    if (textParts.length && charCount + separatorChars + text.length > targetChars) {
-      pages.push({
-        text: textParts.join("\n\n"),
-        startChunkIndex,
-        endChunkIndex,
-      });
-      textParts = [];
-      charCount = 0;
-      startChunkIndex = chunk.chunk_index;
-    }
-    textParts.push(text);
-    charCount += separatorChars + text.length;
-    endChunkIndex = chunk.chunk_index;
+    getChunkParagraphs(chunk).forEach((paragraph) => {
+      appendParagraphToReaderPages(paragraph, chunk.chunk_index, current, pages, metrics);
+    });
   });
 
-  if (textParts.length) {
-    pages.push({
-      text: textParts.join("\n\n"),
-      startChunkIndex,
-      endChunkIndex,
-    });
-  }
+  commitReaderPage(current, pages);
   return pages;
 }
 
-function getReaderPageTargetChars() {
-  const width = Math.min(window.innerWidth - 44, 544);
-  const height = Math.max(360, window.innerHeight - 180);
-  const fontSize = Math.max(18, Math.min(29, window.innerWidth * 0.052 + state.readerSettings.fontStep));
-  const charsPerLine = Math.max(28, Math.floor(width / (fontSize * 0.54)));
-  const lines = Math.max(10, Math.floor(height / (fontSize * 1.58)));
-  return Math.max(900, Math.floor(charsPerLine * lines * 0.86));
+function getChunkParagraphs(chunk) {
+  const text = (chunk.text || "").replace(/\r\n?/g, "\n").trim();
+  if (!text) return [];
+  return text
+    .split(/\n\s*\n/g)
+    .map((paragraph) => paragraph.replace(/\s*\n\s*/g, " ").trim())
+    .filter(Boolean);
+}
+
+function createEmptyReaderPage() {
+  return {
+    text: "",
+    startChunkIndex: null,
+    endChunkIndex: null,
+  };
+}
+
+function appendParagraphToReaderPages(paragraph, chunkIndex, current, pages, metrics) {
+  if (!paragraph) return;
+  const candidate = joinReaderPageText(current.text, paragraph);
+  if (readerTextFits(candidate, metrics)) {
+    addTextToReaderPage(current, paragraph, chunkIndex);
+    return;
+  }
+
+  if (current.text) {
+    commitReaderPage(current, pages);
+  }
+
+  if (readerTextFits(paragraph, metrics)) {
+    addTextToReaderPage(current, paragraph, chunkIndex);
+    return;
+  }
+
+  appendLongParagraphByWords(paragraph, chunkIndex, current, pages, metrics);
+}
+
+function appendLongParagraphByWords(paragraph, chunkIndex, current, pages, metrics) {
+  let words = paragraph.split(/\s+/u).filter(Boolean);
+  while (words.length) {
+    const count = findFittingWordCount(words, current.text, metrics);
+    if (count === 0) {
+      if (current.text) {
+        commitReaderPage(current, pages);
+        continue;
+      }
+      addTextToReaderPage(current, words.shift(), chunkIndex);
+      commitReaderPage(current, pages);
+      continue;
+    }
+
+    addTextToReaderPage(current, words.slice(0, count).join(" "), chunkIndex);
+    words = words.slice(count);
+    if (words.length) {
+      commitReaderPage(current, pages);
+    }
+  }
+}
+
+function findFittingWordCount(words, currentText, metrics) {
+  let low = 1;
+  let high = words.length;
+  let best = 0;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const candidate = joinReaderPageText(currentText, words.slice(0, mid).join(" "));
+    if (readerTextFits(candidate, metrics)) {
+      best = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return best;
+}
+
+function addTextToReaderPage(page, text, chunkIndex) {
+  if (page.startChunkIndex === null) page.startChunkIndex = chunkIndex;
+  page.endChunkIndex = chunkIndex;
+  page.text = joinReaderPageText(page.text, text);
+}
+
+function commitReaderPage(page, pages) {
+  if (!page.text) return;
+  pages.push({
+    text: page.text,
+    startChunkIndex: page.startChunkIndex,
+    endChunkIndex: page.endChunkIndex,
+  });
+  page.text = "";
+  page.startChunkIndex = null;
+  page.endChunkIndex = null;
+}
+
+function joinReaderPageText(currentText, nextText) {
+  return currentText ? `${currentText}\n\n${nextText}` : nextText;
+}
+
+function getReaderVisualMetrics() {
+  if (!els.chunkText || !els.chunkTextValue) {
+    return { width: Math.max(260, window.innerWidth - 44), height: Math.max(320, window.innerHeight - 160) };
+  }
+
+  const containerStyle = window.getComputedStyle(els.chunkText);
+  const textStyle = window.getComputedStyle(els.chunkTextValue);
+  const paddingX = parseCssPixels(containerStyle.paddingLeft) + parseCssPixels(containerStyle.paddingRight);
+  const paddingY = parseCssPixels(containerStyle.paddingTop) + parseCssPixels(containerStyle.paddingBottom);
+  const contentWidth = Math.max(120, els.chunkText.clientWidth - paddingX);
+  const contentHeight = Math.max(80, els.chunkText.clientHeight - paddingY);
+  const maxTextWidth = parseCssPixels(textStyle.maxWidth, contentWidth);
+  const measuredTextWidth = els.chunkTextValue.getBoundingClientRect().width;
+  const width = Math.max(120, Math.min(contentWidth, maxTextWidth, measuredTextWidth || contentWidth));
+
+  return {
+    width,
+    height: contentHeight,
+  };
+}
+
+function parseCssPixels(value, fallback = 0) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function readerTextFits(text, metrics) {
+  const measure = getReaderMeasure();
+  measure.root.style.width = `${metrics.width}px`;
+  measure.span.style.width = `${metrics.width}px`;
+  measure.span.textContent = text || " ";
+  return measure.span.scrollHeight <= metrics.height + 1;
+}
+
+function getReaderMeasure() {
+  if (state.readerMeasure) return state.readerMeasure;
+
+  const root = document.createElement("article");
+  root.className = "chunk-text reader-pagination-measure";
+  const span = document.createElement("span");
+  root.append(span);
+  document.body.append(root);
+  state.readerMeasure = { root, span };
+  return state.readerMeasure;
+}
+
+function getCurrentReaderPageAnchor() {
+  const page = state.readerPages[state.readerPageCursor];
+  if (!page) {
+    return {
+      chunkIndex: state.currentChunkIndex,
+      textStart: "",
+    };
+  }
+  return {
+    chunkIndex: page.startChunkIndex,
+    textStart: page.text.slice(0, 80),
+  };
+}
+
+function findReaderPageCursor(anchor) {
+  if (!state.readerPages.length) return 0;
+  if (!anchor) return 0;
+
+  const exact = state.readerPages.findIndex(
+    (page) => page.startChunkIndex === anchor.chunkIndex && page.text.startsWith(anchor.textStart),
+  );
+  if (exact >= 0) return exact;
+
+  const containing = state.readerPages.findIndex(
+    (page) => page.startChunkIndex <= anchor.chunkIndex && page.endChunkIndex >= anchor.chunkIndex,
+  );
+  return containing >= 0 ? containing : 0;
+}
+
+function scheduleReaderRepagination(delay = 140) {
+  if (state.readerReflowTimer) {
+    window.clearTimeout(state.readerReflowTimer);
+    state.readerReflowTimer = null;
+  }
+  if (!shouldUseVisualReaderPages()) return;
+
+  state.readerReflowTimer = window.setTimeout(() => {
+    state.readerReflowTimer = null;
+    repaginateLoadedReaderPages().catch((error) => showNotice(error.message));
+  }, delay);
+}
+
+async function repaginateLoadedReaderPages() {
+  if (!shouldUseVisualReaderPages()) return;
+  if (!state.readerLoadedChunks.length) {
+    resetReaderPages();
+    await ensureReaderPages();
+    return;
+  }
+
+  const anchor = getCurrentReaderPageAnchor();
+  rebuildReaderPages(anchor);
+  showReaderPage(state.readerPageCursor);
+}
+
+function shouldUseVisualReaderPages() {
+  return document.body.classList.contains("focus-mode") && state.readerSettings.mode === "page" && Boolean(state.activeBook);
 }
 
 function showReaderPage(cursor) {
@@ -891,12 +1100,13 @@ function showReaderPage(cursor) {
     state.currentChunk = cachedStart.chunk;
   }
   els.chunkTextValue.textContent = page.text;
-  renderReaderProgressMini(state.totalChunks ? ((page.endChunkIndex + 1) / state.totalChunks) * 100 : 0);
+  const progress = state.totalChunks ? ((page.endChunkIndex + 1) / state.totalChunks) * 100 : 0;
+  els.progressMeta.textContent = state.totalChunks ? `${page.startChunkIndex + 1} / ${state.totalChunks}` : "0 / 0";
+  els.progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+  els.tapPreviousChunk.disabled = cursor <= 0 && (state.readerBufferedFromChunkIndex ?? 0) <= 0;
+  els.tapNextChunk.disabled = cursor >= state.readerPages.length - 1 && state.readerBufferedUntilChunkIndex >= state.totalChunks - 1;
+  renderReaderProgressMini(progress);
   preloadAdjacentChunks(state.activeBook.id, page.endChunkIndex);
-}
-
-function estimatePageNumberForChunk(chunkIndex) {
-  return Math.max(1, Math.floor(chunkIndex / 2.6) + 1);
 }
 
 async function moveChunk(delta) {
@@ -1031,13 +1241,21 @@ function renderBookCollection(container, books, compact) {
     item.className = `book-card ${state.activeBook?.id === book.id ? "active" : ""}`;
     const cover = document.createElement("span");
     cover.className = "book-cover";
-    if (book.cover_image_data_url) {
+    if (isRenderableCoverUrl(book.cover_image_data_url)) {
       const image = document.createElement("img");
-      image.src = book.cover_image_data_url;
       image.alt = "";
+      image.addEventListener("error", () => {
+        image.remove();
+        cover.textContent = getBookCoverFallback(book);
+      });
+      try {
+        image.src = book.cover_image_data_url;
+      } catch (error) {
+        cover.textContent = getBookCoverFallback(book);
+      }
       cover.append(image);
     } else {
-      cover.textContent = formatBookTitle(book.title).slice(0, 1).toUpperCase() || "B";
+      cover.textContent = getBookCoverFallback(book);
     }
 
     const copy = document.createElement("span");
@@ -1055,11 +1273,34 @@ function renderBookCollection(container, books, compact) {
   });
 }
 
+function getBookCoverFallback(book) {
+  return formatBookTitle(book.title).slice(0, 1).toUpperCase() || "B";
+}
+
+function isRenderableCoverUrl(value) {
+  if (!value || typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (trimmed.startsWith("data:image/")) {
+    return /^data:image\/(?:png|jpe?g|webp|gif|svg\+xml);base64,[a-z0-9+/=\s]+$/i.test(trimmed);
+  }
+  if (trimmed.startsWith("https://")) {
+    try {
+      new URL(trimmed);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+  return false;
+}
+
 function renderReader() {
   const book = state.activeBook;
   els.bookMeta.textContent = book ? formatBookTitle(book.title) : t("chooseBook");
   els.progressMeta.textContent = state.totalChunks ? `${state.currentChunkIndex + 1} / ${state.totalChunks}` : "0 / 0";
-  els.chunkTextValue.textContent = state.currentChunk?.text || t("readerEmpty");
+  if (!shouldUseVisualReaderPages() || !state.readerPages.length) {
+    els.chunkTextValue.textContent = state.currentChunk?.text || t("readerEmpty");
+  }
 
   const progress = state.totalChunks ? ((state.currentChunkIndex + 1) / state.totalChunks) * 100 : 0;
   els.progressFill.style.width = `${Math.max(0, Math.min(100, progress))}%`;
@@ -1077,9 +1318,12 @@ function renderReader() {
 
 function renderReaderProgressMini(progress) {
   if (state.readerSettings.mode === "page" && state.totalChunks) {
-    const currentPage = state.readerPageOffset + state.readerPageCursor + 1;
-    const totalPages = Math.max(currentPage, estimatePageNumberForChunk(state.totalChunks - 1));
-    els.readerProgressText.textContent = `${currentPage} / ${totalPages}`;
+    els.readerProgressText.textContent = t("readerVisualProgress", {
+      page: state.readerPageCursor + 1,
+      loaded: Math.max(1, state.readerPages.length),
+      chunk: state.currentChunkIndex + 1,
+      total: state.totalChunks,
+    });
   } else {
     els.readerProgressText.textContent = state.totalChunks ? `${state.currentChunkIndex + 1} / ${state.totalChunks}` : "0 / 0";
   }
@@ -1305,6 +1549,7 @@ function bindEvents() {
   });
 
   window.addEventListener("resize", syncViewportHeight);
+  window.addEventListener("orientationchange", () => scheduleReaderRepagination(240));
   window.addEventListener("keydown", (event) => {
     if (!document.body.classList.contains("focus-mode")) return;
     if (event.key === "ArrowLeft") moveChunk(-1).catch((error) => showNotice(error.message));
@@ -1385,6 +1630,8 @@ function setFocusMode(enabled) {
     navigate("reader");
     els.welcomeBonus.classList.add("hidden");
     applyReaderSettings();
+    syncViewportHeight();
+    syncSafeArea();
     updateImmersiveReaderText().catch((error) => showNotice(error.message));
     revealReaderOverlay(2600);
   } else {

@@ -1002,7 +1002,7 @@ p {
   flex: 1;
   min-height: 0;
   max-height: none;
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: 0;
   padding: 0 2px 72px;
   background: transparent;
@@ -1025,6 +1025,27 @@ p {
   display: block;
   max-width: 34rem;
   margin: 0 auto;
+  white-space: pre-wrap;
+}
+
+.reader-pagination-measure {
+  position: fixed !important;
+  top: 0 !important;
+  left: -10000px !important;
+  z-index: -1 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.reader-pagination-measure > span {
+  max-width: none !important;
+  margin: 0 !important;
+  white-space: pre-wrap !important;
 }
 
 .focus-mode .tap-zone {
@@ -1035,6 +1056,10 @@ p {
   width: 34%;
   min-height: 0;
   border-radius: 0;
+}
+
+.focus-mode .tap-zone:focus {
+  outline: none;
 }
 
 .focus-mode .tap-zone-left {
