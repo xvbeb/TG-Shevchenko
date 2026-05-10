@@ -19,11 +19,12 @@ from app.schemas.admin import (
     AdminMessageResponse,
     AdminMessageResult,
     AdminProgressRow,
+    AdminRechunkResponse,
     AdminStats,
     AdminSummary,
     AdminUserRow,
 )
-from app.services.books import is_uncat
+from app.services.books import is_uncat, rechunk_book
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -147,6 +148,15 @@ async def send_admin_message(
 
     sent = sum(1 for result in results if result.ok)
     return AdminMessageResponse(sent=sent, failed=len(results) - sent, results=results)
+
+
+@router.post("/api/books/{book_id}/rechunk", response_model=AdminRechunkResponse)
+def rechunk_admin_book(
+    book_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_uncat_admin),
+) -> AdminRechunkResponse:
+    return AdminRechunkResponse(**rechunk_book(db, current_user, book_id))
 
 
 def _message_recipients(db: Session, payload: AdminMessageRequest) -> list[User]:

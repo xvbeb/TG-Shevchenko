@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.routers.dependencies import get_current_user
-from app.schemas.book import BookDetail, BookRead, BookSearchResponse, ReadRangeResponse, ReadResponse
+from app.schemas.book import BookDetail, BookNoteResponse, BookRead, BookSearchResponse, ReadRangeResponse, ReadResponse
 from app.schemas.progress import ProgressUpdate, ReadingProgressRead
 from app.schemas.welcome_bonus import WelcomeBonusRead
 from app.services.books import (
@@ -19,6 +19,7 @@ from app.services.books import (
     get_chunk,
     get_chunks_range,
     get_user_book,
+    find_book_note,
     list_user_books,
     search_book_chunks,
     update_book_metadata,
@@ -165,3 +166,13 @@ def search_book(
     current_user: User = Depends(get_current_user),
 ):
     return {"query": q, "results": search_book_chunks(db, current_user, book_id, q, limit)}
+
+
+@router.get("/{book_id}/notes/{marker}", response_model=BookNoteResponse)
+def book_note(
+    book_id: int,
+    marker: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return find_book_note(db, current_user, book_id, marker)

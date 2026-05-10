@@ -261,7 +261,8 @@ h2 {
 }
 
 .row-meta,
-.row-stats {
+.row-stats,
+.row-actions {
   flex-wrap: wrap;
   gap: 8px;
   color: var(--muted);
@@ -278,6 +279,21 @@ h2 {
   color: var(--muted);
   font-size: 12px;
   font-weight: 720;
+}
+
+.row-actions {
+  display: flex;
+}
+
+.small-action-button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 12px;
+  background: var(--paper);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 780;
 }
 
 .progress-track {

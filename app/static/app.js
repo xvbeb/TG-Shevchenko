@@ -3,7 +3,7 @@ const tg = window.Telegram?.WebApp;
 const SCREEN_META = {
   home: { titleKey: "screenHome", eyebrow: "ТГ Шевченко" },
   library: { titleKey: "screenLibrary", eyebrow: "cloud books" },
-  reader: { titleKey: "screenReader", eyebrow: "one chunk" },
+  reader: { titleKey: "screenReader", eyebrow: "classic reader" },
   progress: { titleKey: "screenProgress", eyebrow: "gentle pace" },
   settings: { titleKey: "screenSettings", eyebrow: "reading comfort" },
 };
@@ -20,7 +20,7 @@ const I18N = {
     welcomeDefault: "Добро пожаловать",
     greeting: "Привет, {name}",
     continueLabel: "Продолжить чтение",
-    continueButton: "Продолжить",
+    continueButton: "Читать",
     quickSessionButton: "3 минуты",
     noBookTitle: "Книга пока не выбрана",
     noBookMeta: "Загрузи книгу или выбери ее в библиотеке.",
@@ -51,17 +51,22 @@ const I18N = {
     streakDone: "День засчитан",
     streakDays: "{count} дн.",
     libraryTitle: "Библиотека",
-    readerLabel: "Reader",
+    readerLabel: "Книга",
     chooseBook: "Выбери книгу",
     searchPlaceholder: "Слово или номер фрагмента",
     searchButton: "Найти",
     readerEmpty: "Выбери книгу в библиотеке или загрузи новый файл.",
     readerInitial: "Здесь появится один небольшой абзац. Без гонки, без давления.",
-    focusMode: "Focus mode",
+    classicReadMode: "Читать в Classic Read Mode",
+    classicReadModeHint: "Основной режим: страницы, главы, сноски и спокойное чтение",
+    quickFragmentLabel: "Быстрый фрагмент",
+    quickFragmentTitle: "Один смысловой кусок",
+    quickFragmentPill: "ADHD tool",
+    nextQuickFragment: "Ещё фрагмент",
     depthQuick: "Коротко",
     depthStory: "События",
     depthDeep: "Глубже",
-    exitFocus: "Выйти из focus",
+    exitClassicReadMode: "Выйти из CRM",
     saveAndExit: "Сохранить и выйти",
     streakZero: "0 дней",
     streakOne: "1 день",
@@ -79,7 +84,7 @@ const I18N = {
     themeAuto: "Системная / Telegram",
     chunkSizeLabel: "Размер фрагмента",
     oneParagraph: "Один абзац",
-    focusHint: "Минимум отвлечений",
+    focusHint: "Страницы, главы и спокойное чтение",
     soon: "Soon",
     navHome: "Home",
     navLibrary: "Library",
@@ -140,7 +145,7 @@ const I18N = {
     welcomeDefault: "Ласкаво просимо",
     greeting: "Привіт, {name}",
     continueLabel: "Продовжити читання",
-    continueButton: "Продовжити",
+    continueButton: "Читати",
     quickSessionButton: "3 хвилини",
     noBookTitle: "Книжку ще не вибрано",
     noBookMeta: "Завантаж книжку або вибери її в бібліотеці.",
@@ -171,17 +176,22 @@ const I18N = {
     streakDone: "День зараховано",
     streakDays: "{count} дн.",
     libraryTitle: "Бібліотека",
-    readerLabel: "Reader",
+    readerLabel: "Книжка",
     chooseBook: "Вибери книжку",
     searchPlaceholder: "Слово або номер фрагмента",
     searchButton: "Знайти",
     readerEmpty: "Вибери книжку в бібліотеці або завантаж новий файл.",
     readerInitial: "Тут з'явиться один невеликий абзац. Без гонитви, без тиску.",
-    focusMode: "Focus mode",
+    classicReadMode: "Читати в Classic Read Mode",
+    classicReadModeHint: "Основний режим: сторінки, розділи, примітки й спокійне читання",
+    quickFragmentLabel: "Швидкий фрагмент",
+    quickFragmentTitle: "Один смисловий шматок",
+    quickFragmentPill: "ADHD tool",
+    nextQuickFragment: "Ще фрагмент",
     depthQuick: "Коротко",
     depthStory: "Події",
     depthDeep: "Глибше",
-    exitFocus: "Вийти з focus",
+    exitClassicReadMode: "Вийти з CRM",
     saveAndExit: "Зберегти й вийти",
     streakZero: "0 днів",
     streakOne: "1 день",
@@ -199,7 +209,7 @@ const I18N = {
     themeAuto: "Системна / Telegram",
     chunkSizeLabel: "Розмір фрагмента",
     oneParagraph: "Один абзац",
-    focusHint: "Мінімум відволікань",
+    focusHint: "Сторінки, розділи й спокійне читання",
     soon: "Скоро",
     navHome: "Додому",
     navLibrary: "Бібліотека",
@@ -341,6 +351,8 @@ const els = {
   readerSearchResults: document.querySelector("#readerSearchResults"),
   chunkText: document.querySelector("#chunkText"),
   chunkTextValue: document.querySelector("#chunkTextValue"),
+  chunkPreviousButton: document.querySelector("#chunkPreviousButton"),
+  chunkNextButton: document.querySelector("#chunkNextButton"),
   welcomeBonus: document.querySelector("#welcomeBonus"),
   welcomeBonusText: document.querySelector("#welcomeBonusText"),
   toggleWelcomeBonus: document.querySelector("#toggleWelcomeBonus"),
@@ -361,7 +373,7 @@ const els = {
   readerThemeToggle: document.querySelector("#readerThemeToggle"),
   readerModeToggle: document.querySelector("#readerModeToggle"),
   readerZonesToggle: document.querySelector("#readerZonesToggle"),
-  focusModeToggle: document.querySelector("#focusModeToggle"),
+  classicReadModeButton: document.querySelector("#classicReadModeButton"),
   streakValue: document.querySelector("#streakValue"),
   streakToast: document.querySelector("#streakToast"),
   streakToastText: document.querySelector("#streakToastText"),
@@ -432,6 +444,8 @@ function applyTranslations() {
   els.refreshBooks.setAttribute("aria-label", t("refresh"));
   els.tapPreviousChunk.setAttribute("aria-label", t("previousChunk"));
   els.tapNextChunk.setAttribute("aria-label", t("nextChunk"));
+  els.chunkPreviousButton.textContent = t("previousChunk");
+  els.chunkNextButton.textContent = t("nextQuickFragment");
   els.toggleReaderOverlay.setAttribute("aria-label", t("toggleReaderOverlay"));
   els.readerFontDown.setAttribute("aria-label", t("readerFontDown"));
   els.readerFontUp.setAttribute("aria-label", t("readerFontUp"));
@@ -647,6 +661,9 @@ async function openBook(bookId, options = { switchToReader: true }) {
 
   if (options.switchToReader) {
     navigate("reader");
+    if (options.openClassic !== false) {
+      openClassicReadMode();
+    }
   }
 }
 
@@ -785,7 +802,7 @@ function loadReaderSettings() {
     const saved = JSON.parse(localStorage.getItem("adhdReader.readerSettings") || "{}");
     state.readerSettings.fontStep = Number.isFinite(saved.fontStep) ? saved.fontStep : 0;
     state.readerSettings.theme = ["dark", "black", "sepia"].includes(saved.theme) ? saved.theme : "dark";
-    state.readerSettings.mode = ["page", "chunk"].includes(saved.mode) ? saved.mode : "page";
+    state.readerSettings.mode = "page";
     state.readerSettings.showZones = Boolean(saved.showZones);
   } catch (error) {
     state.readerSettings = { fontStep: 0, theme: "dark", mode: "page", showZones: false };
@@ -800,6 +817,7 @@ function saveReaderSettings() {
 function applyReaderSettings() {
   const fontStep = Math.max(-2, Math.min(3, state.readerSettings.fontStep));
   state.readerSettings.fontStep = fontStep;
+  state.readerSettings.mode = "page";
   document.documentElement.style.setProperty("--reader-font-adjust", `${fontStep}px`);
   document.body.classList.toggle("reader-theme-black", state.readerSettings.theme === "black");
   document.body.classList.toggle("reader-theme-sepia", state.readerSettings.theme === "sepia");
@@ -838,7 +856,7 @@ function cycleReaderTheme() {
 }
 
 async function toggleReaderMode() {
-  state.readerSettings.mode = state.readerSettings.mode === "page" ? "chunk" : "page";
+  state.readerSettings.mode = "page";
   applyReaderSettings();
   saveReaderSettings();
   resetReaderPages();
@@ -847,6 +865,17 @@ async function toggleReaderMode() {
     renderReaderProgressMini(state.totalChunks ? ((state.currentChunkIndex + 1) / state.totalChunks) * 100 : 0);
   }
   revealReaderOverlay();
+}
+
+function openClassicReadMode() {
+  if (!state.activeBook) {
+    showNotice(t("chooseBookNotice"));
+    return;
+  }
+  state.readerSettings.mode = "page";
+  applyReaderSettings();
+  saveReaderSettings();
+  setFocusMode(true);
 }
 
 function toggleReaderZones() {
@@ -974,9 +1003,8 @@ function getChunkParagraphs(chunk) {
   if (!text) return [];
   return text
     .split(/\n\s*\n/g)
-    .map((paragraph) => normalizeReaderParagraph(paragraph))
-    .filter(Boolean)
-    .map((paragraph) => ({ text: paragraph, continuation: false }));
+    .flatMap((paragraph) => splitReaderStructuralBlocks(paragraph))
+    .map((paragraph) => ({ text: paragraph, continuation: false, chapter: isReaderChapterHeading(paragraph) }));
 }
 
 function normalizeReaderParagraph(text) {
@@ -984,6 +1012,32 @@ function normalizeReaderParagraph(text) {
     .replace(/[ \t]*\n[ \t]*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function splitReaderStructuralBlocks(paragraph) {
+  const blocks = [];
+  const buffer = [];
+  String(paragraph || "")
+    .split(/\n+/g)
+    .forEach((line) => {
+      const clean = normalizeReaderParagraph(line);
+      if (!clean) return;
+      if (isReaderChapterHeading(clean)) {
+        flushReaderLineBuffer(blocks, buffer);
+        blocks.push(clean);
+      } else {
+        buffer.push(clean);
+      }
+    });
+  flushReaderLineBuffer(blocks, buffer);
+  return blocks;
+}
+
+function flushReaderLineBuffer(blocks, buffer) {
+  if (!buffer.length) return;
+  const value = normalizeReaderParagraph(buffer.join(" "));
+  if (value) blocks.push(value);
+  buffer.length = 0;
 }
 
 function createEmptyReaderPage() {
@@ -996,6 +1050,10 @@ function createEmptyReaderPage() {
 
 function appendParagraphToReaderPages(block, chunkIndex, current, pages, metrics) {
   if (!block?.text) return;
+  if (block.chapter && current.blocks.length) {
+    commitReaderPage(current, pages);
+  }
+
   const candidate = [...current.blocks, block];
   if (readerTextFits(candidate, metrics)) {
     addBlockToReaderPage(current, block, chunkIndex);
@@ -1003,6 +1061,10 @@ function appendParagraphToReaderPages(block, chunkIndex, current, pages, metrics
   }
 
   if (current.blocks.length) {
+    if (isReaderHeadingOnlyPage(current)) {
+      appendLongParagraphByWords(block.text, chunkIndex, current, pages, metrics);
+      return;
+    }
     commitReaderPage(current, pages);
   }
 
@@ -1037,6 +1099,33 @@ function appendLongParagraphByWords(paragraph, chunkIndex, current, pages, metri
       isContinuation = true;
     }
   }
+}
+
+function isReaderChapterHeading(text) {
+  const value = normalizeReaderParagraph(text);
+  if (!value) return false;
+  const words = value.split(/\s+/u);
+  if (words.length > 14 || value.length > 110) return false;
+  if (
+    /^(?:глава|розділ|раздел|част[ьи]?|частина|книга|chapter|part|book)(?:\s|$|[.:№-])/iu.test(value) ||
+    /^(?:пролог|епілог|эпилог|вступ|передмова|предисловие|послесловие)(?:\s|$|[.:№-])/iu.test(value) ||
+    /^(?:ch\.?|ч\.)\s*[\divxlcdm]+(?:\s|$|[.)])/iu.test(value)
+  ) {
+    return true;
+  }
+  if (words.length <= 2 && /^(?:[ivxlcdm]+|\d{1,4})(?:[.)])?$/iu.test(value)) {
+    return true;
+  }
+  if (words.length <= 8 && !/[.!?…:;,]$/u.test(value)) {
+    const letters = Array.from(value.matchAll(/[^\W\d_]/gu), (match) => match[0]);
+    const uppercase = letters.filter((letter) => letter.toUpperCase() === letter && letter.toLowerCase() !== letter);
+    return Boolean(letters.length && uppercase.length / letters.length >= 0.72);
+  }
+  return false;
+}
+
+function isReaderHeadingOnlyPage(page) {
+  return page.blocks.length === 1 && page.blocks[0]?.chapter;
 }
 
 function findFittingWordCount(words, currentBlocks, continuation, metrics) {
@@ -1119,7 +1208,7 @@ function getReaderMeasure() {
 
   const root = document.createElement("article");
   root.className = "chunk-text reader-pagination-measure";
-  const content = document.createElement("span");
+  const content = document.createElement("div");
   content.className = "reader-page-content";
   root.append(content);
   document.body.append(root);
@@ -1218,18 +1307,48 @@ function renderReaderBlocks(container, blocks) {
     const paragraph = document.createElement("p");
     paragraph.className = "reader-paragraph";
     paragraph.classList.toggle("continuation", Boolean(block.continuation));
-    paragraph.textContent = block.text;
+    paragraph.classList.toggle("chapter", Boolean(block.chapter));
+    renderReaderInlineText(paragraph, block.text);
     container.append(paragraph);
   });
+}
+
+function renderReaderInlineText(container, text) {
+  const value = String(text || "");
+  const footnotePattern = /\[(\d{1,4})\]/gu;
+  let cursor = 0;
+  for (const match of value.matchAll(footnotePattern)) {
+    if (match.index > cursor) {
+      container.append(document.createTextNode(value.slice(cursor, match.index)));
+    }
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "footnote-link";
+    button.textContent = match[0];
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      showBookNote(match[1]).catch((error) => showNotice(error.message));
+    });
+    container.append(button);
+    cursor = match.index + match[0].length;
+  }
+  if (cursor < value.length) {
+    container.append(document.createTextNode(value.slice(cursor)));
+  }
+}
+
+async function showBookNote(marker) {
+  if (!state.activeBook) return;
+  const note = await api(`/books/${state.activeBook.id}/notes/${encodeURIComponent(marker)}`);
+  showNotice(`Сноска [${note.marker}]\n\n${note.text}`);
 }
 
 function renderPlainReaderText(text) {
   const blocks = String(text || t("readerEmpty"))
     .replace(/\r\n?/g, "\n")
     .split(/\n\s*\n/g)
-    .map((paragraph) => normalizeReaderParagraph(paragraph))
-    .filter(Boolean)
-    .map((paragraph) => ({ text: paragraph, continuation: false }));
+    .flatMap((paragraph) => splitReaderStructuralBlocks(paragraph))
+    .map((paragraph) => ({ text: paragraph, continuation: false, chapter: isReaderChapterHeading(paragraph) }));
   renderReaderBlocks(els.chunkTextValue, blocks.length ? blocks : [{ text: t("readerEmpty"), continuation: false }]);
 }
 
@@ -1297,6 +1416,7 @@ async function startSession(minutes = 3) {
   await loadStreak({ celebrate: true });
   addActivity(t("sessionStarted", { minutes }));
   navigate("reader");
+  openClassicReadMode();
   renderProgress();
   showNotice(t("sessionNotice", { minutes }));
 }
@@ -1526,8 +1646,11 @@ function renderReader() {
   renderReaderProgressMini(progress);
   els.tapPreviousChunk.disabled = !book || state.currentChunkIndex <= 0;
   els.tapNextChunk.disabled = !book || state.currentChunkIndex >= state.totalChunks - 1;
+  els.chunkPreviousButton.disabled = !book || state.currentChunkIndex <= 0;
+  els.chunkNextButton.disabled = !book || state.currentChunkIndex >= state.totalChunks - 1;
   els.saveStop.disabled = !book;
   els.readerSearchButton.disabled = !book;
+  els.classicReadModeButton.disabled = !book;
   renderWelcome();
   renderSearchResults();
   if (document.body.classList.contains("focus-mode")) {
@@ -1731,17 +1854,22 @@ function bindEvents() {
   els.continueReading.addEventListener("click", () => {
     if (state.activeBook) {
       readChunk(state.activeBook.id, state.currentChunkIndex, { trackActivity: true })
-        .then(() => navigate("reader"))
+        .then(() => {
+          navigate("reader");
+          openClassicReadMode();
+        })
         .catch((error) => showNotice(error.message));
     }
   });
   els.quickSession.addEventListener("click", () => startSession(3).catch((error) => showNotice(error.message)));
   els.tapPreviousChunk.addEventListener("click", () => moveChunk(-1).catch((error) => showNotice(error.message)));
   els.tapNextChunk.addEventListener("click", () => moveChunk(1).catch((error) => showNotice(error.message)));
+  els.chunkPreviousButton.addEventListener("click", () => moveChunk(-1).catch((error) => showNotice(error.message)));
+  els.chunkNextButton.addEventListener("click", () => moveChunk(1).catch((error) => showNotice(error.message)));
   els.toggleReaderOverlay.addEventListener("click", () => toggleReaderOverlay());
   els.saveStop.addEventListener("click", () => saveProgress().catch((error) => showNotice(error.message)));
-  els.focusModeToggle.addEventListener("change", () => {
-    setFocusMode(els.focusModeToggle.checked);
+  els.classicReadModeButton.addEventListener("click", () => {
+    openClassicReadMode();
   });
   els.exitFocusMode.addEventListener("click", () => {
     setFocusMode(false);
@@ -1856,7 +1984,8 @@ function setReaderOverlayVisible(visible, delay = 0) {
 }
 
 function setFocusMode(enabled) {
-  els.focusModeToggle.checked = enabled;
+  els.classicReadModeButton.classList.toggle("active", enabled);
+  els.classicReadModeButton.setAttribute("aria-pressed", enabled ? "true" : "false");
   document.body.classList.toggle("focus-mode", enabled);
   els.exitFocusMode.classList.toggle("hidden", !enabled);
   if (enabled) {

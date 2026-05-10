@@ -9,7 +9,7 @@
     <meta name="color-scheme" content="dark light" />
     <title>ТГ Шевченко</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/styles.css?v=product-2" />
+    <link rel="stylesheet" href="/styles.css?v=product-3" />
   </head>
   <body>
     <div id="appLoading" class="app-loading" aria-live="polite">
@@ -116,24 +116,18 @@
               <span id="progressFill"></span>
             </div>
 
+            <div class="reader-mode-entry">
+              <button id="classicReadModeButton" class="primary-button" data-i18n="classicReadMode">Classic Read Mode</button>
+              <span data-i18n="classicReadModeHint">Страницы как в обычной читалке</span>
+            </div>
+
             <div class="reader-search">
               <input id="readerSearchInput" class="text-input" placeholder="Слово или номер фрагмента" />
               <button id="readerSearchButton" class="secondary-button mini-button" data-i18n="searchButton">Найти</button>
               <div id="readerSearchResults" class="search-results hidden"></div>
             </div>
 
-            <article id="chunkText" class="chunk-text">
-              <button id="tapPreviousChunk" class="tap-zone tap-zone-left" aria-label="Предыдущий фрагмент"></button>
-              <button id="toggleReaderOverlay" class="tap-zone tap-zone-center" aria-label="Показать настройки чтения"></button>
-              <button id="tapNextChunk" class="tap-zone tap-zone-right" aria-label="Следующий фрагмент"></button>
-              <span id="chunkTextValue" data-i18n="readerEmpty">Здесь появится один небольшой абзац. Без гонки, без давления.</span>
-            </article>
-
             <div class="reader-tools">
-              <label class="toggle-row">
-                <input id="focusModeToggle" type="checkbox" />
-                <span data-i18n="focusMode">Focus mode</span>
-              </label>
               <button id="toggleWelcomeBonus" class="secondary-button mini-button">Welcome Bonus</button>
               <div class="depth-control" role="group" aria-label="Глубина пересказа">
                 <button class="depth-button active" data-depth="quick" data-i18n="depthQuick">Коротко</button>
@@ -145,10 +139,30 @@
               <button id="closeWelcomeBonus" class="recap-close" aria-label="Закрыть пересказ">×</button>
               <p id="welcomeBonusText"></p>
             </div>
+
+            <div class="quick-fragment-heading">
+              <div>
+                <p class="soft-label" data-i18n="quickFragmentLabel">Быстрый фрагмент</p>
+                <h3 data-i18n="quickFragmentTitle">Один смысловой кусок</h3>
+              </div>
+              <span class="count-pill" data-i18n="quickFragmentPill">ADHD tool</span>
+            </div>
+
+            <article id="chunkText" class="chunk-text">
+              <button id="tapPreviousChunk" class="tap-zone tap-zone-left" aria-label="Предыдущий фрагмент"></button>
+              <button id="toggleReaderOverlay" class="tap-zone tap-zone-center" aria-label="Показать настройки чтения"></button>
+              <button id="tapNextChunk" class="tap-zone tap-zone-right" aria-label="Следующий фрагмент"></button>
+              <div id="chunkTextValue" class="reader-page-content" data-i18n="readerEmpty">Здесь появится один небольшой абзац. Без гонки, без давления.</div>
+            </article>
+
+            <div class="chunk-navigation" aria-label="Навигация по фрагментам">
+              <button id="chunkPreviousButton" class="secondary-button" data-i18n="previousChunk">Предыдущий фрагмент</button>
+              <button id="chunkNextButton" class="secondary-button" data-i18n="nextQuickFragment">Ещё фрагмент</button>
+            </div>
           </section>
 
           <nav class="reader-actions">
-            <button id="exitFocusMode" class="secondary-button hidden" data-i18n="exitFocus">Выйти из focus</button>
+            <button id="exitFocusMode" class="secondary-button hidden" data-i18n="exitClassicReadMode">Выйти из CRM</button>
             <button id="saveStop" class="primary-button" data-i18n="saveAndExit">Сохранить и выйти</button>
           </nav>
 
@@ -166,7 +180,7 @@
                 <button id="readerFontDown" class="reader-icon-button" aria-label="Уменьшить шрифт">A-</button>
                 <button id="readerFontUp" class="reader-icon-button" aria-label="Увеличить шрифт">A+</button>
                 <button id="readerThemeToggle" class="reader-icon-button wide" data-i18n="readerThemeDark">Dark</button>
-                <button id="readerModeToggle" class="reader-icon-button wide" data-i18n="readerModePage">Pages</button>
+                <button id="readerModeToggle" class="reader-icon-button wide hidden" data-i18n="readerModePage">Pages</button>
                 <button id="readerZonesToggle" class="reader-icon-button wide" data-i18n="readerZones">Zones</button>
               </div>
             </div>
@@ -234,10 +248,10 @@
             </article>
             <article class="setting-row">
               <div>
-                <p class="soft-label">Focus mode</p>
+                <p class="soft-label">Classic Read Mode</p>
                 <h3 data-i18n="focusHint">Минимум отвлечений</h3>
               </div>
-              <span class="count-pill" data-i18n="soon">Soon</span>
+              <span class="count-pill">CRM</span>
             </article>
             <article class="setting-row">
               <div>

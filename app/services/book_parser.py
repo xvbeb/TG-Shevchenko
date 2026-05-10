@@ -65,7 +65,7 @@ def _parse_epub(filename: str, content: bytes, title: Optional[str], author: Opt
 
     for item in book.get_items_of_type(ITEM_DOCUMENT):
         soup = BeautifulSoup(item.get_content(), "html.parser")
-        for tag in soup.find_all(["p", "blockquote", "li"]):
+        for tag in soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6", "p", "blockquote", "li"]):
             text = normalize_text(tag.get_text(" "))
             if text:
                 paragraphs.append(text)
@@ -91,7 +91,7 @@ def _parse_fb2(filename: str, content: bytes, title: Optional[str], author: Opti
     cover_image_data_url = _extract_fb2_cover(soup)
     paragraphs: list[str] = []
 
-    for tag in soup.find_all(["p", "subtitle", "v"]):
+    for tag in soup.find_all(["title", "subtitle", "p", "v"]):
         value = normalize_text(tag.get_text(" "))
         if value:
             paragraphs.append(value)

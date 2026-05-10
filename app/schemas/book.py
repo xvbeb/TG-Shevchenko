@@ -65,3 +65,10 @@ class BookSearchResult(BaseModel):
 class BookSearchResponse(BaseModel):
     query: str
     results: list[BookSearchResult]
+
+
+class BookNoteResponse(BaseModel):
+    marker: str
+    text: str
+    found: bool
+    chunk_index: Optional[int] = None

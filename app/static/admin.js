@@ -107,6 +107,14 @@ function renderProgress(rows) {
 function renderBooks(rows) {
   renderList(els.booksList, rows, (row) => {
     const item = createRow();
+    const actions = document.createElement("div");
+    actions.className = "row-actions";
+    const rechunkButton = document.createElement("button");
+    rechunkButton.className = "small-action-button";
+    rechunkButton.type = "button";
+    rechunkButton.textContent = "Rechunk";
+    rechunkButton.addEventListener("click", () => rechunkBook(row, rechunkButton));
+    actions.append(rechunkButton);
     item.append(
       createMain(cleanTitle(row.title), row.source_type.toUpperCase()),
       createMeta([
@@ -120,6 +128,7 @@ function renderBooks(rows) {
         `${row.total_words} слов`,
         formatDate(row.uploaded_at),
       ]),
+      actions,
     );
     return item;
   });
@@ -230,6 +239,29 @@ async function sendMessage() {
     setMessageResult(error.message);
   } finally {
     els.sendMessage.disabled = false;
+  }
+}
+
+async function rechunkBook(row, button) {
+  const title = cleanTitle(row.title);
+  if (!window.confirm(`Пересобрать фрагменты книги “${title}”? Прогресс пользователей будет перенесён по позиции в тексте.`)) {
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Собираю...";
+  setNotice("");
+  try {
+    const result = await api(`/admin/api/books/${row.id}/rechunk`, { method: "POST" });
+    setMessageResult(
+      `Rechunk готов: “${title}” было ${result.old_total_chunks}, стало ${result.new_total_chunks} фрагм.; прогрессов обновлено ${result.progress_rows_updated}.`,
+    );
+    await loadDashboard();
+  } catch (error) {
+    setNotice(error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Rechunk";
   }
 }
 

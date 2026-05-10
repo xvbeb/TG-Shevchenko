@@ -5,13 +5,13 @@ import re
 from typing import Optional
 
 from fastapi import HTTPException, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
 from app.models import Book, BookChunk, ReadingProgress, User
 from app.services.book_parser import parse_book_upload
-from app.utils.text import count_words
+from app.utils.text import build_reading_chunks, count_words, split_paragraphs
 
 
 settings = get_settings()
@@ -90,6 +90,55 @@ def update_book_metadata(
     db.commit()
     db.refresh(book)
     return book
+
+
+def rechunk_book(db: Session, user: User, book_id: int) -> dict[str, int]:
+    book = db.scalar(select(Book).where(Book.id == book_id))
+    if not book or not can_user_read_book(user, book):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+    if not can_user_edit_book(user, book):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You cannot rechunk this book")
+
+    old_chunks = list(db.scalars(select(BookChunk).where(BookChunk.book_id == book.id).order_by(BookChunk.chunk_index)))
+    if not old_chunks:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Book has no chunks to rebuild")
+
+    progress_rows = list(db.scalars(select(ReadingProgress).where(ReadingProgress.book_id == book.id)))
+    old_offsets = _chunk_start_offsets(old_chunks)
+    progress_offsets = {
+        progress.id: old_offsets[min(max(progress.current_chunk_index, 0), len(old_offsets) - 1)]
+        for progress in progress_rows
+    }
+
+    rebuilt_text = "\n\n".join(chunk.text for chunk in old_chunks if chunk.text.strip())
+    new_chunks = build_reading_chunks(split_paragraphs(rebuilt_text))
+    if not new_chunks:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Could not rebuild readable chunks")
+
+    new_word_counts = [count_words(chunk) for chunk in new_chunks]
+    new_offsets = _word_end_offsets(new_word_counts)
+
+    db.execute(delete(BookChunk).where(BookChunk.book_id == book.id))
+    db.flush()
+    db.add_all(
+        BookChunk(book_id=book.id, chunk_index=index, text=chunk, word_count=new_word_counts[index])
+        for index, chunk in enumerate(new_chunks)
+    )
+
+    book.total_chunks = len(new_chunks)
+    book.total_words = sum(new_word_counts)
+    for progress in progress_rows:
+        progress.current_chunk_index = _chunk_index_for_word_offset(new_offsets, progress_offsets.get(progress.id, 0))
+
+    db.commit()
+    db.refresh(book)
+    return {
+        "book_id": book.id,
+        "old_total_chunks": len(old_chunks),
+        "new_total_chunks": book.total_chunks,
+        "total_words": book.total_words,
+        "progress_rows_updated": len(progress_rows),
+    }
 
 
 def list_user_books(db: Session, user: User) -> list[Book]:
@@ -174,6 +223,36 @@ def search_book_chunks(db: Session, user: User, book_id: int, query: str, limit:
     return results
 
 
+def find_book_note(db: Session, user: User, book_id: int, marker: str) -> dict[str, object]:
+    book = get_user_book(db, user, book_id)
+    clean_marker = marker.strip().strip("[]")
+    if not re.fullmatch(r"\d{1,4}", clean_marker):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Note marker must be a number")
+
+    chunks = list(db.scalars(select(BookChunk).where(BookChunk.book_id == book.id).order_by(BookChunk.chunk_index)))
+    marker_pattern = re.escape(clean_marker)
+    definition_re = re.compile(
+        rf"(?:^|\n\s*\n)\s*(?:\[{marker_pattern}\]|{marker_pattern}[.)])\s+"
+        rf"(.+?)(?=(?:\n\s*\n\s*(?:\[\d{{1,4}}\]|\d{{1,4}}[.)])\s+)|\Z)",
+        re.DOTALL,
+    )
+
+    for chunk in chunks:
+        match = definition_re.search(chunk.text)
+        if not match:
+            continue
+        note_text = normalize_note_text(match.group(1))
+        if note_text:
+            return {"marker": clean_marker, "text": note_text, "found": True, "chunk_index": chunk.chunk_index}
+
+    return {
+        "marker": clean_marker,
+        "text": f"Сноска [{clean_marker}] есть в тексте, но объяснение не найдено в загруженных фрагментах книги.",
+        "found": False,
+        "chunk_index": None,
+    }
+
+
 def can_user_read_book(user: User, book: Book) -> bool:
     return is_uncat(user) or book.user_id == user.id or is_public_book(book)
 
@@ -209,6 +288,13 @@ def _build_snippet(text: str, terms: list[str]) -> str:
     return prefix + text[start:end].strip() + suffix
 
 
+def normalize_note_text(text: str, max_chars: int = 1200) -> str:
+    value = re.sub(r"\s+", " ", text).strip()
+    if len(value) <= max_chars:
+        return value
+    return value[: max_chars - 1].rstrip() + "..."
+
+
 def _cover_data_url(content: bytes, content_type: Optional[str]) -> str:
     if len(content) > 1_500_000:
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Cover image is too large")
@@ -216,3 +302,28 @@ def _cover_data_url(content: bytes, content_type: Optional[str]) -> str:
     if mime not in {"image/jpeg", "image/png", "image/webp", "image/gif"}:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cover must be JPEG, PNG, WebP or GIF")
     return f"data:{mime};base64,{base64.b64encode(content).decode('ascii')}"
+
+
+def _chunk_start_offsets(chunks: list[BookChunk]) -> list[int]:
+    offsets: list[int] = []
+    total = 0
+    for chunk in chunks:
+        offsets.append(total)
+        total += max(0, chunk.word_count or count_words(chunk.text))
+    return offsets or [0]
+
+
+def _word_end_offsets(word_counts: list[int]) -> list[int]:
+    offsets: list[int] = []
+    total = 0
+    for word_count in word_counts:
+        total += max(0, word_count)
+        offsets.append(total)
+    return offsets or [0]
+
+
+def _chunk_index_for_word_offset(end_offsets: list[int], word_offset: int) -> int:
+    for index, end_offset in enumerate(end_offsets):
+        if word_offset < end_offset:
+            return index
+    return max(0, len(end_offsets) - 1)

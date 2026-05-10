@@ -78,3 +78,11 @@ class AdminMessageResponse(BaseModel):
     sent: int
     failed: int
     results: list[AdminMessageResult]
+
+
+class AdminRechunkResponse(BaseModel):
+    book_id: int
+    old_total_chunks: int
+    new_total_chunks: int
+    total_words: int
+    progress_rows_updated: int
