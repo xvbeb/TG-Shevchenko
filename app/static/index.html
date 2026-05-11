@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru">
+<html lang="uk">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -9,18 +9,18 @@
     <meta name="color-scheme" content="dark light" />
     <title>ТГ Шевченко</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/styles.css?v=product-3" />
+    <link rel="stylesheet" href="/styles.css?v=product-7" />
   </head>
   <body>
     <div id="appLoading" class="app-loading" aria-live="polite">
       <div class="loading-card">
         <div class="loading-emoji" aria-hidden="true">📚</div>
         <p class="soft-label">ТГ Шевченко</p>
-        <h2 data-i18n="loadingTitle">Собираю тихое место для чтения</h2>
+        <h2 data-i18n="loadingTitle">Збираю тихе місце для читання</h2>
         <div class="loading-lines">
-          <span class="loading-line" data-i18n="loadingLine1">Проверяю книги</span>
-          <span class="loading-line" data-i18n="loadingLine2">Вспоминаю прогресс</span>
-          <span class="loading-line" data-i18n="loadingLine3">Готовлю мягкий вход</span>
+          <span class="loading-line" data-i18n="loadingLine1">Перевіряю книжки</span>
+          <span class="loading-line" data-i18n="loadingLine2">Згадую прогрес</span>
+          <span class="loading-line" data-i18n="loadingLine3">Готую мʼякий вхід</span>
         </div>
       </div>
     </div>
@@ -28,9 +28,9 @@
       <header class="app-topbar">
         <div class="topbar-copy">
           <p id="topEyebrow" class="top-eyebrow">ТГ Шевченко</p>
-          <h1 id="screenTitle">Домой</h1>
+          <h1 id="screenTitle">Додому</h1>
         </div>
-        <button id="refreshBooks" class="round-button" title="Обновить" aria-label="Обновить">↻</button>
+        <button id="refreshBooks" class="round-button" title="Оновити" aria-label="Оновити">↻</button>
       </header>
 
       <main id="appMain" class="app-main">
@@ -38,32 +38,32 @@
 
         <section class="screen active" data-screen="home">
           <div class="hero-card">
-            <p id="homeGreeting" class="soft-label">Добро пожаловать</p>
-            <h2 data-i18n="homeHeroTitle">Вернемся к книге без рывка</h2>
-            <p data-i18n="homeHeroBody">Один маленький фрагмент уже считается хорошей сессией.</p>
+            <p id="homeGreeting" class="soft-label">Ласкаво просимо</p>
+            <h2 data-i18n="homeHeroTitle">Повернімося до книжки без ривка</h2>
+            <p data-i18n="homeHeroBody">Один маленький фрагмент вже рахується доброю сесією.</p>
           </div>
 
           <article class="continue-card">
             <div>
-              <p class="soft-label" data-i18n="continueLabel">Продолжить чтение</p>
-              <h3 id="continueTitle">Книга пока не выбрана</h3>
-              <p id="continueMeta">Загрузи книгу или выбери ее в библиотеке.</p>
+              <p class="soft-label" data-i18n="continueLabel">Продовжити читання</p>
+              <h3 id="continueTitle">Книжку ще не вибрано</h3>
+              <p id="continueMeta">Завантаж книжку або вибери її в бібліотеці.</p>
             </div>
             <div class="action-row">
-              <button id="continueReading" class="primary-button" data-i18n="continueButton">Продолжить</button>
-              <button id="quickSession" class="secondary-button" data-i18n="quickSessionButton">3 минуты</button>
+              <button id="continueReading" class="primary-button" data-i18n="continueButton">Читати</button>
+              <button id="quickSession" class="secondary-button" data-i18n="quickSessionButton">3 хвилини</button>
             </div>
           </article>
 
           <article id="welcomePreviewCard" class="recap-card hidden">
-            <p class="soft-label">Welcome Bonus</p>
-            <p id="welcomePreview" data-i18n="welcomeFallback">Здесь будет короткое напоминание перед возвращением.</p>
+            <p class="soft-label" data-i18n="welcomeBonusLabel">Що було раніше</p>
+            <p id="welcomePreview" data-i18n="welcomeFallback">Тут буде коротке нагадування перед поверненням.</p>
           </article>
 
           <section class="section-block">
             <div class="section-heading">
-              <h2 data-i18n="recentBooks">Недавние книги</h2>
-              <button class="link-button" data-go-screen="library" data-i18n="allBooks">Все</button>
+              <h2 data-i18n="recentBooks">Нещодавні книжки</h2>
+              <button class="link-button" data-go-screen="library" data-i18n="allBooks">Усі</button>
             </div>
             <div id="recentBooks" class="horizontal-books"></div>
           </section>
@@ -72,31 +72,31 @@
         <section class="screen" data-screen="library">
           <section class="upload-card">
             <div>
-              <p class="soft-label" data-i18n="importLabel">Импорт</p>
-              <h2 data-i18n="addBook">Добавить книгу</h2>
-              <p data-i18n="importHint">TXT, EPUB, FB2 или .fb2.zip. PDF отложим на потом.</p>
+              <p class="soft-label" data-i18n="importLabel">Імпорт</p>
+              <h2 data-i18n="addBook">Додати книжку</h2>
+              <p data-i18n="importHint">TXT, EPUB, FB2 або .fb2.zip. PDF відкладемо на потім.</p>
             </div>
             <label class="file-picker">
               <input id="bookFile" type="file" accept=".txt,.epub,.fb2,.zip" />
-              <span data-i18n="chooseFile">Выбрать файл</span>
+              <span data-i18n="chooseFile">Вибрати файл</span>
             </label>
-            <input id="bookTitle" class="text-input" placeholder="Название, если нужно" />
+            <input id="bookTitle" class="text-input" placeholder="Назва, якщо потрібно" />
             <div id="uploadStatus" class="upload-status hidden"></div>
             <div id="uploadProgress" class="upload-progress hidden" aria-live="polite">
               <div class="upload-progress-meta">
-                <span data-i18n="uploading">Загрузка</span>
+                <span data-i18n="uploading">Завантаження</span>
                 <strong id="uploadProgressValue">0%</strong>
               </div>
               <div class="upload-progress-track">
                 <span id="uploadProgressFill"></span>
               </div>
             </div>
-            <button id="uploadBook" class="primary-button" data-i18n="uploadButton">Загрузить</button>
+            <button id="uploadBook" class="primary-button" data-i18n="uploadButton">Завантажити</button>
           </section>
 
           <section class="section-block">
             <div class="section-heading">
-              <h2 data-i18n="libraryTitle">Библиотека</h2>
+              <h2 data-i18n="libraryTitle">Бібліотека</h2>
               <span id="bookCount" class="count-pill">0</span>
             </div>
             <div id="booksList" class="book-list"></div>
@@ -107,8 +107,8 @@
           <section class="reader-card">
             <div class="reader-header">
               <div>
-                <p class="soft-label" data-i18n="readerLabel">Reader</p>
-                <h2 id="bookMeta">Выбери книгу</h2>
+                <p class="soft-label" data-i18n="readerLabel">Книжка</p>
+                <h2 id="bookMeta">Вибери книжку</h2>
               </div>
               <span id="progressMeta" class="count-pill">0 / 0</span>
             </div>
@@ -117,59 +117,60 @@
             </div>
 
             <div class="reader-mode-entry">
-              <button id="classicReadModeButton" class="primary-button" data-i18n="classicReadMode">Classic Read Mode</button>
-              <span data-i18n="classicReadModeHint">Страницы как в обычной читалке</span>
+              <button id="classicReadModeButton" class="primary-button" data-i18n="classicReadMode">Класичне читання</button>
+              <span data-i18n="classicReadModeHint">Сторінки, розділи, примітки й спокійне читання</span>
             </div>
 
             <div class="reader-search">
-              <input id="readerSearchInput" class="text-input" placeholder="Слово или номер фрагмента" />
-              <button id="readerSearchButton" class="secondary-button mini-button" data-i18n="searchButton">Найти</button>
+              <input id="readerSearchInput" class="text-input" placeholder="Слово або номер фрагмента" />
+              <button id="readerSearchButton" class="secondary-button mini-button" data-i18n="searchButton">Знайти</button>
               <div id="readerSearchResults" class="search-results hidden"></div>
             </div>
 
             <div class="reader-tools">
-              <button id="toggleWelcomeBonus" class="secondary-button mini-button">Welcome Bonus</button>
-              <div class="depth-control" role="group" aria-label="Глубина пересказа">
-                <button class="depth-button active" data-depth="quick" data-i18n="depthQuick">Коротко</button>
-                <button class="depth-button" data-depth="story" data-i18n="depthStory">События</button>
-                <button class="depth-button" data-depth="deep" data-i18n="depthDeep">Глубже</button>
+              <button id="toggleWelcomeBonus" class="secondary-button mini-button" data-i18n="welcomeBonusLabel">Що було раніше</button>
+              <div class="depth-control" role="group" aria-label="Тип нагадування">
+                <button class="depth-button active" data-bonus-type="quick" data-i18n="bonusQuick">Швидко</button>
+                <button class="depth-button" data-bonus-type="fiction" data-i18n="bonusFiction">Сюжет</button>
+                <button class="depth-button" data-bonus-type="nonfiction" data-i18n="bonusNonfiction">Ідеї</button>
+                <button class="depth-button" data-bonus-type="characters" data-i18n="bonusCharacters">Персонажі</button>
               </div>
             </div>
             <div id="welcomeBonus" class="recap-card compact hidden">
-              <button id="closeWelcomeBonus" class="recap-close" aria-label="Закрыть пересказ">×</button>
+              <button id="closeWelcomeBonus" class="recap-close" aria-label="Закрити переказ">×</button>
               <p id="welcomeBonusText"></p>
             </div>
 
             <div class="quick-fragment-heading">
               <div>
-                <p class="soft-label" data-i18n="quickFragmentLabel">Быстрый фрагмент</p>
-                <h3 data-i18n="quickFragmentTitle">Один смысловой кусок</h3>
+                <p class="soft-label" data-i18n="quickFragmentLabel">Короткий фрагмент</p>
+                <h3 data-i18n="quickFragmentTitle">Мʼякий режим</h3>
               </div>
-              <span class="count-pill" data-i18n="quickFragmentPill">ADHD tool</span>
+              <span class="count-pill" data-i18n="quickFragmentPill">Без ривка</span>
             </div>
 
             <article id="chunkText" class="chunk-text">
-              <button id="tapPreviousChunk" class="tap-zone tap-zone-left" aria-label="Предыдущий фрагмент"></button>
-              <button id="toggleReaderOverlay" class="tap-zone tap-zone-center" aria-label="Показать настройки чтения"></button>
-              <button id="tapNextChunk" class="tap-zone tap-zone-right" aria-label="Следующий фрагмент"></button>
-              <div id="chunkTextValue" class="reader-page-content" data-i18n="readerEmpty">Здесь появится один небольшой абзац. Без гонки, без давления.</div>
+              <button id="tapPreviousChunk" class="tap-zone tap-zone-left" aria-label="Попередній фрагмент"></button>
+              <button id="toggleReaderOverlay" class="tap-zone tap-zone-center" aria-label="Показати налаштування читання"></button>
+              <button id="tapNextChunk" class="tap-zone tap-zone-right" aria-label="Наступний фрагмент"></button>
+              <div id="chunkTextValue" class="reader-page-content" data-i18n="readerEmpty">Тут зʼявиться один невеликий абзац. Без гонитви, без тиску.</div>
             </article>
 
-            <div class="chunk-navigation" aria-label="Навигация по фрагментам">
-              <button id="chunkPreviousButton" class="secondary-button" data-i18n="previousChunk">Предыдущий фрагмент</button>
-              <button id="chunkNextButton" class="secondary-button" data-i18n="nextQuickFragment">Ещё фрагмент</button>
+            <div class="chunk-navigation" aria-label="Навігація фрагментами">
+              <button id="chunkPreviousButton" class="secondary-button" data-i18n="previousChunk">Попередній фрагмент</button>
+              <button id="chunkNextButton" class="secondary-button" data-i18n="nextQuickFragment">Ще фрагмент</button>
             </div>
           </section>
 
           <nav class="reader-actions">
-            <button id="exitFocusMode" class="secondary-button hidden" data-i18n="exitClassicReadMode">Выйти из CRM</button>
-            <button id="saveStop" class="primary-button" data-i18n="saveAndExit">Сохранить и выйти</button>
+            <button id="exitFocusMode" class="secondary-button hidden" data-i18n="exitClassicReadMode">Вийти з читання</button>
+            <button id="saveStop" class="primary-button" data-i18n="saveAndExit">Зберегти й вийти</button>
           </nav>
 
           <div id="readerOverlay" class="reader-overlay hidden">
             <div class="reader-overlay-top">
-              <button id="overlayExit" class="reader-overlay-button" data-i18n="readerClose">Закрыть</button>
-              <button id="overlaySave" class="reader-overlay-button primary" data-i18n="saveAndExit">Сохранить и выйти</button>
+              <button id="overlayExit" class="reader-overlay-button" data-i18n="readerClose">Закрити</button>
+              <button id="overlaySave" class="reader-overlay-button primary" data-i18n="saveAndExit">Зберегти й вийти</button>
             </div>
             <div class="reader-overlay-bottom">
               <div class="reader-progress-mini">
@@ -177,11 +178,11 @@
                 <div class="reader-progress-mini-track"><span id="readerProgressMiniFill"></span></div>
               </div>
               <div class="reader-settings-strip">
-                <button id="readerFontDown" class="reader-icon-button" aria-label="Уменьшить шрифт">A-</button>
-                <button id="readerFontUp" class="reader-icon-button" aria-label="Увеличить шрифт">A+</button>
-                <button id="readerThemeToggle" class="reader-icon-button wide" data-i18n="readerThemeDark">Dark</button>
-                <button id="readerModeToggle" class="reader-icon-button wide hidden" data-i18n="readerModePage">Pages</button>
-                <button id="readerZonesToggle" class="reader-icon-button wide" data-i18n="readerZones">Zones</button>
+                <button id="readerFontDown" class="reader-icon-button" aria-label="Зменшити шрифт">A-</button>
+                <button id="readerFontUp" class="reader-icon-button" aria-label="Збільшити шрифт">A+</button>
+                <button id="readerThemeToggle" class="reader-icon-button wide" data-i18n="readerThemeDark">Темна</button>
+                <button id="readerModeToggle" class="reader-icon-button wide hidden" data-i18n="readerModePage">Сторінки</button>
+                <button id="readerZonesToggle" class="reader-icon-button wide" data-i18n="readerZones">Зони</button>
               </div>
             </div>
           </div>
@@ -190,25 +191,25 @@
         <section class="screen" data-screen="progress">
           <div class="stats-grid">
             <article class="stat-card">
-              <p class="soft-label">Gentle streak</p>
-              <strong id="streakValue">0 дней</strong>
-              <span data-i18n="streakHint">Возвращение важнее идеальной серии.</span>
-              <div id="weekStreak" class="week-streak" aria-label="Дни недели"></div>
+              <p class="soft-label" data-i18n="streakLabel">Мʼяка серія</p>
+              <strong id="streakValue">0 днів</strong>
+              <span data-i18n="streakHint">Повернення важливіше за ідеальну серію.</span>
+              <div id="weekStreak" class="week-streak" aria-label="Дні тижня"></div>
             </article>
             <article class="stat-card">
-              <p class="soft-label" data-i18n="sessionsLabel">Сессии</p>
+              <p class="soft-label" data-i18n="sessionsLabel">Сесії</p>
               <strong id="sessionsValue">0</strong>
-              <span data-i18n="sessionsHint">Короткие заходы тоже считаются.</span>
+              <span data-i18n="sessionsHint">Короткі підходи теж рахуються.</span>
             </article>
             <article class="stat-card">
-              <p class="soft-label" data-i18n="chunksLabel">Фрагменты</p>
+              <p class="soft-label" data-i18n="chunksLabel">Фрагменти</p>
               <strong id="chunksValue">0</strong>
-              <span data-i18n="chunksHint">Маленькие шаги, меньше трения.</span>
+              <span data-i18n="chunksHint">Малі кроки, менше тертя.</span>
             </article>
           </div>
 
           <section class="section-block">
-            <h2 data-i18n="recentActivity">Недавняя активность</h2>
+            <h2 data-i18n="recentActivity">Нещодавня активність</h2>
             <div id="activityList" class="activity-list"></div>
           </section>
         </section>
@@ -217,71 +218,93 @@
           <section class="settings-list">
             <article class="setting-row">
               <div>
-                <p class="soft-label" data-i18n="languageLabel">Язык</p>
-                <h3 data-i18n="languageTitle">Язык интерфейса</h3>
+                <p class="soft-label" data-i18n="languageLabel">Мова</p>
+                <h3 data-i18n="languageTitle">Мова інтерфейсу</h3>
               </div>
-              <div class="language-toggle" role="group" aria-label="Язык">
-                <button class="language-option active" data-language="ru">RU</button>
-                <button class="language-option" data-language="uk">UA</button>
-              </div>
+              <span class="count-pill">Українська</span>
             </article>
             <article class="setting-row">
               <div>
-                <p class="soft-label" data-i18n="textSizeLabel">Размер текста</p>
-                <h3 data-i18n="comfortableText">Комфортный</h3>
+                <p class="soft-label" data-i18n="textSizeLabel">Розмір тексту</p>
+                <h3 data-i18n="comfortableText">Комфортний</h3>
               </div>
-              <span class="count-pill" data-i18n="soon">Soon</span>
+              <span class="count-pill" data-i18n="soon">Скоро</span>
             </article>
             <article class="setting-row">
               <div>
                 <p class="soft-label" data-i18n="themeLabel">Тема</p>
-                <h3 data-i18n="themeAuto">Системная / Telegram</h3>
+                <h3 data-i18n="themeAuto">Системна / Telegram</h3>
               </div>
-              <span class="count-pill">Auto</span>
+              <span class="count-pill">Авто</span>
             </article>
             <article class="setting-row">
               <div>
-                <p class="soft-label" data-i18n="chunkSizeLabel">Размер фрагмента</p>
+                <p class="soft-label" data-i18n="chunkSizeLabel">Розмір фрагмента</p>
                 <h3 data-i18n="oneParagraph">Один абзац</h3>
               </div>
-              <span class="count-pill">MVP</span>
+              <span class="count-pill">Скоро</span>
             </article>
             <article class="setting-row">
               <div>
-                <p class="soft-label">Classic Read Mode</p>
-                <h3 data-i18n="focusHint">Минимум отвлечений</h3>
+                <p class="soft-label" data-i18n="classicReadMode">Класичне читання</p>
+                <h3 data-i18n="focusHint">Мінімум відволікань</h3>
               </div>
-              <span class="count-pill">CRM</span>
+              <span class="count-pill">Читання</span>
             </article>
             <article class="setting-row">
               <div>
-                <p class="soft-label">Telegram user</p>
-                <h3 id="telegramUserInfo">Local Reader</h3>
+                <p class="soft-label" data-i18n="telegramUserLabel">Користувач Telegram</p>
+                <h3 id="telegramUserInfo">Локальний читач</h3>
               </div>
             </article>
           </section>
         </section>
       </main>
 
-      <nav class="bottom-nav" aria-label="Главная навигация">
-        <button class="nav-item active" data-screen-target="home"><span>🏠</span><b data-i18n="navHome">Home</b></button>
-        <button class="nav-item" data-screen-target="library"><span>📚</span><b data-i18n="navLibrary">Library</b></button>
-        <button class="nav-item" data-screen-target="reader"><span>📖</span><b data-i18n="navReader">Reader</b></button>
-        <button class="nav-item" data-screen-target="progress"><span>📊</span><b data-i18n="navProgress">Progress</b></button>
-        <button class="nav-item" data-screen-target="settings"><span>⚙️</span><b data-i18n="navSettings">Settings</b></button>
+      <nav class="bottom-nav" aria-label="Головна навігація">
+        <button class="nav-item active" data-screen-target="home">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg>
+          </span>
+          <b data-i18n="navHome">Додому</b>
+        </button>
+        <button class="nav-item" data-screen-target="library">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 5.5h6a3 3 0 0 1 3 3V20a3 3 0 0 0-3-3H5z"/><path d="M19 5.5h-5a3 3 0 0 0-3 3"/><path d="M19 5.5V17h-5a3 3 0 0 0-3 3"/></svg>
+          </span>
+          <b data-i18n="navLibrary">Бібліотека</b>
+        </button>
+        <button class="nav-item" data-screen-target="reader">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M7 4.5h10a2 2 0 0 1 2 2v13H7a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z"/><path d="M8 8h8"/><path d="M8 11.5h7"/><path d="M8 15h5"/></svg>
+          </span>
+          <b data-i18n="navReader">Читання</b>
+        </button>
+        <button class="nav-item" data-screen-target="progress">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 19V9"/><path d="M12 19V5"/><path d="M19 19v-7"/><path d="M4 19h16"/></svg>
+          </span>
+          <b data-i18n="navProgress">Прогрес</b>
+        </button>
+        <button class="nav-item" data-screen-target="settings">
+          <span class="nav-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7z"/><path d="M12 3.5v2"/><path d="M12 18.5v2"/><path d="M4.6 7.8l1.7 1"/><path d="M17.7 15.2l1.7 1"/><path d="M19.4 7.8l-1.7 1"/><path d="M6.3 15.2l-1.7 1"/></svg>
+          </span>
+          <b data-i18n="navSettings">Налаштування</b>
+        </button>
       </nav>
     </div>
     <dialog id="editBookDialog" class="edit-dialog">
       <form id="editBookForm" method="dialog" class="edit-card">
         <div class="section-heading">
           <div>
-            <p class="soft-label" data-i18n="editBookTitle">Книга</p>
-            <h2 id="editBookHeading">Редактировать</h2>
+            <p class="soft-label" data-i18n="editBookTitle">Книжка</p>
+            <h2 id="editBookHeading">Редагувати</h2>
           </div>
-          <button id="closeEditBook" class="round-button" type="button" aria-label="Закрыть">×</button>
+          <button id="closeEditBook" class="round-button" type="button" aria-label="Закрити">×</button>
         </div>
         <label class="edit-field">
-          <span data-i18n="editTitleLabel">Название</span>
+          <span data-i18n="editTitleLabel">Назва</span>
           <input id="editTitle" class="text-input" type="text" />
         </label>
         <label class="edit-field">
@@ -290,22 +313,22 @@
         </label>
         <label class="file-picker">
           <input id="editCover" type="file" accept="image/png,image/jpeg,image/webp,image/gif" />
-          <span data-i18n="editCoverLabel">Обложка</span>
+          <span data-i18n="editCoverLabel">Обкладинка</span>
         </label>
         <label class="toggle-row edit-remove-cover">
           <input id="editRemoveCover" type="checkbox" />
-          <span data-i18n="removeCover">Убрать обложку</span>
+          <span data-i18n="removeCover">Прибрати обкладинку</span>
         </label>
         <div class="action-row">
-          <button id="cancelEditBook" class="secondary-button" type="button" data-i18n="cancel">Отмена</button>
-          <button id="saveBookEdit" class="primary-button" type="submit" data-i18n="saveChanges">Сохранить</button>
+          <button id="cancelEditBook" class="secondary-button" type="button" data-i18n="cancel">Скасувати</button>
+          <button id="saveBookEdit" class="primary-button" type="submit" data-i18n="saveChanges">Зберегти</button>
         </div>
       </form>
     </dialog>
     <div id="streakToast" class="streak-toast hidden" aria-live="polite">
       <div class="streak-emoji-burst" aria-hidden="true"><span>🔥</span><span>✨</span><span>📖</span><span>🌟</span></div>
-      <strong id="streakToastText">День засчитан</strong>
+      <strong id="streakToastText">День зараховано</strong>
     </div>
-    <script src="/app.js?v=product-2"></script>
+    <script src="/app.js?v=product-7"></script>
   </body>
 </html>

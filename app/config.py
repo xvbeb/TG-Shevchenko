@@ -10,7 +10,7 @@ DEFAULT_LOCAL_DATABASE_URL = "postgresql+psycopg://postgres:postgres@localhost:5
 
 
 class Settings(BaseSettings):
-    app_name: str = "ADHD Reader API"
+    app_name: str = "TGSH"
     environment: str = "local"
     database_url: Optional[str] = None
     database_public_url: Optional[str] = None
@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     allow_dev_auth: bool = True
     max_upload_mb: int = 20
     default_chunk_words: int = 220
+    ai_provider: str = "gemini"
+    ai_model: str = "gemini-2.5-flash"
+    gemini_api_key: Optional[str] = None
+    welcome_bonus_prompt_version: str = "v1"
+    welcome_bonus_context_chunks: int = 10
+    welcome_bonus_max_context_chars: int = 12000
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

@@ -12,6 +12,7 @@ from app.routers.dependencies import get_current_user
 from app.schemas.book import BookDetail, BookNoteResponse, BookRead, BookSearchResponse, ReadRangeResponse, ReadResponse
 from app.schemas.progress import ProgressUpdate, ReadingProgressRead
 from app.schemas.welcome_bonus import WelcomeBonusRead
+from app.services.ai import WelcomeBonusType
 from app.services.books import (
     clamp_chunk_index,
     create_book_from_upload,
@@ -150,11 +151,14 @@ def save_progress(
 @router.get("/{book_id}/welcome-bonus", response_model=WelcomeBonusRead)
 def welcome_bonus(
     book_id: int,
-    depth: Literal["quick", "story", "deep"] = Query(default="story"),
+    bonus_type: WelcomeBonusType = Query(default="quick", alias="type"),
+    depth: Optional[Literal["quick", "story", "deep"]] = Query(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return create_welcome_bonus(db, current_user, book_id, depth)
+    if depth is not None and bonus_type == "quick":
+        bonus_type = {"quick": "quick", "story": "fiction", "deep": "nonfiction"}[depth]  # type: ignore[assignment]
+    return create_welcome_bonus(db, current_user, book_id, bonus_type)
 
 
 @router.get("/{book_id}/search", response_model=BookSearchResponse)

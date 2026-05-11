@@ -2,139 +2,13 @@ const tg = window.Telegram?.WebApp;
 
 const SCREEN_META = {
   home: { titleKey: "screenHome", eyebrow: "ТГ Шевченко" },
-  library: { titleKey: "screenLibrary", eyebrow: "cloud books" },
-  reader: { titleKey: "screenReader", eyebrow: "classic reader" },
-  progress: { titleKey: "screenProgress", eyebrow: "gentle pace" },
-  settings: { titleKey: "screenSettings", eyebrow: "reading comfort" },
+  library: { titleKey: "screenLibrary", eyebrow: "Хмарні книжки" },
+  reader: { titleKey: "screenReader", eyebrow: "Класичне читання" },
+  progress: { titleKey: "screenProgress", eyebrow: "Мʼякий темп" },
+  settings: { titleKey: "screenSettings", eyebrow: "Комфорт читання" },
 };
 
 const I18N = {
-  ru: {
-    screenHome: "Домой",
-    screenLibrary: "Библиотека",
-    screenReader: "Чтение",
-    screenProgress: "Прогресс",
-    screenSettings: "Настройки",
-    homeHeroTitle: "Вернемся к книге без рывка",
-    homeHeroBody: "Один маленький фрагмент уже считается хорошей сессией.",
-    welcomeDefault: "Добро пожаловать",
-    greeting: "Привет, {name}",
-    continueLabel: "Продолжить чтение",
-    continueButton: "Читать",
-    quickSessionButton: "3 минуты",
-    noBookTitle: "Книга пока не выбрана",
-    noBookMeta: "Загрузи книгу или выбери ее в библиотеке.",
-    continueMeta: "{current} из {total} фрагментов",
-    welcomeFallback: "Здесь будет короткое напоминание перед возвращением.",
-    recentBooks: "Недавние книги",
-    allBooks: "Все",
-    importLabel: "Импорт",
-    addBook: "Добавить книгу",
-    importHint: "TXT, EPUB, FB2 или .fb2.zip. PDF отложим на потом.",
-    chooseFile: "Выбрать файл",
-    titlePlaceholder: "Название, если нужно",
-    uploading: "Загрузка",
-    uploadButton: "Загрузить",
-    editBook: "Редактировать",
-    editBookTitle: "Книга",
-    editTitleLabel: "Название",
-    editAuthorLabel: "Автор",
-    editCoverLabel: "Обложка",
-    removeCover: "Убрать обложку",
-    cancel: "Отмена",
-    saveChanges: "Сохранить",
-    bookUpdated: "Книга обновлена.",
-    loadingTitle: "Собираю тихое место для чтения",
-    loadingLine1: "Проверяю книги",
-    loadingLine2: "Вспоминаю прогресс",
-    loadingLine3: "Готовлю мягкий вход",
-    streakDone: "День засчитан",
-    streakDays: "{count} дн.",
-    libraryTitle: "Библиотека",
-    readerLabel: "Книга",
-    chooseBook: "Выбери книгу",
-    searchPlaceholder: "Слово или номер фрагмента",
-    searchButton: "Найти",
-    readerEmpty: "Выбери книгу в библиотеке или загрузи новый файл.",
-    readerInitial: "Здесь появится один небольшой абзац. Без гонки, без давления.",
-    classicReadMode: "Читать в Classic Read Mode",
-    classicReadModeHint: "Основной режим: страницы, главы, сноски и спокойное чтение",
-    quickFragmentLabel: "Быстрый фрагмент",
-    quickFragmentTitle: "Один смысловой кусок",
-    quickFragmentPill: "ADHD tool",
-    nextQuickFragment: "Ещё фрагмент",
-    depthQuick: "Коротко",
-    depthStory: "События",
-    depthDeep: "Глубже",
-    exitClassicReadMode: "Выйти из CRM",
-    saveAndExit: "Сохранить и выйти",
-    streakZero: "0 дней",
-    streakOne: "1 день",
-    streakHint: "Возвращение важнее идеальной серии.",
-    sessionsLabel: "Сессии",
-    sessionsHint: "Короткие заходы тоже считаются.",
-    chunksLabel: "Фрагменты",
-    chunksHint: "Маленькие шаги, меньше трения.",
-    recentActivity: "Недавняя активность",
-    languageLabel: "Язык",
-    languageTitle: "Язык интерфейса",
-    textSizeLabel: "Размер текста",
-    comfortableText: "Комфортный",
-    themeLabel: "Тема",
-    themeAuto: "Системная / Telegram",
-    chunkSizeLabel: "Размер фрагмента",
-    oneParagraph: "Один абзац",
-    focusHint: "Страницы, главы и спокойное чтение",
-    soon: "Soon",
-    navHome: "Home",
-    navLibrary: "Library",
-    navReader: "Reader",
-    navProgress: "Progress",
-    navSettings: "Settings",
-    refresh: "Обновить",
-    previousChunk: "Предыдущий фрагмент",
-    nextChunk: "Следующий фрагмент",
-    toggleReaderOverlay: "Показать настройки чтения",
-    readerClose: "Закрыть",
-    readerFontDown: "Уменьшить шрифт",
-    readerFontUp: "Увеличить шрифт",
-    readerThemeDark: "Dark",
-    readerThemeBlack: "Black",
-    readerThemeSepia: "Sepia",
-    readerModePage: "Pages",
-    readerModeChunk: "Chunks",
-    readerZones: "Zones",
-    readerZonesOff: "Hide zones",
-    readerVisualProgress: "Стр. {page}/{loaded} · фрагм. {chunk}/{total}",
-    recapDepth: "Глубина пересказа",
-    closeRecap: "Закрыть пересказ",
-    mainNav: "Главная навигация",
-    weekDays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
-    emptyLibrary: "Пока пусто. Добавь книгу, и она появится здесь.",
-    authorUnknown: "Автор не указан",
-    compactBookMeta: "{author} · {chunks} фрагм.",
-    libraryBookMeta: "{author} · {words} слов",
-    libraryCurrentMeta: "{author} · сейчас {current}/{total}",
-    uploadNoFile: "Выбери TXT, EPUB или FB2 файл",
-    selectedFile: "Выбран файл",
-    selectedFileHint: "Нажми “Загрузить”, чтобы добавить книгу.",
-    uploaded: "Загружено",
-    addedBook: "Добавлена книга: {title}",
-    chooseBookNotice: "Сначала выбери книгу",
-    savedPlace: "Сохранено место: {title}, фрагмент {chunk}",
-    finishedBook: "Ты дочитал(а) книгу! Это было не про скорость, а про возвращение.",
-    savedNotice: "Сохранено. Можно спокойно вернуться позже.",
-    sessionStarted: "Начата спокойная сессия на {minutes} минуты",
-    sessionNotice: "{minutes} минуты. Один фрагмент уже достаточно.",
-    progressChunk: "Фрагмент {page} · {words} слов",
-    uploadFailed: "Upload failed",
-    uploadAborted: "Upload aborted",
-    invalidUploadResponse: "Upload response is not valid JSON",
-    unnamedBook: "Без названия",
-    languageSaved: "Язык сохранён.",
-    activityEmpty: "Здесь появятся мягкие отметки: сессии, сохранения и возвращения к книге.",
-  },
-  uk: {
     screenHome: "Додому",
     screenLibrary: "Бібліотека",
     screenReader: "Читання",
@@ -150,7 +24,11 @@ const I18N = {
     noBookTitle: "Книжку ще не вибрано",
     noBookMeta: "Завантаж книжку або вибери її в бібліотеці.",
     continueMeta: "{current} із {total} фрагментів",
+    welcomeBonusLabel: "Що було раніше",
     welcomeFallback: "Тут буде коротке нагадування перед поверненням.",
+    welcomeLoading: "Генерую коротке нагадування...",
+    welcomeLoadError: "Не вдалося завантажити нагадування. Можна спокійно продовжувати читання.",
+    unknownCharacter: "Персонаж",
     recentBooks: "Нещодавні книжки",
     allBooks: "Усі",
     importLabel: "Імпорт",
@@ -172,7 +50,7 @@ const I18N = {
     loadingTitle: "Збираю тихе місце для читання",
     loadingLine1: "Перевіряю книжки",
     loadingLine2: "Згадую прогрес",
-    loadingLine3: "Готую м'який вхід",
+    loadingLine3: "Готую мʼякий вхід",
     streakDone: "День зараховано",
     streakDays: "{count} дн.",
     libraryTitle: "Бібліотека",
@@ -182,17 +60,19 @@ const I18N = {
     searchButton: "Знайти",
     readerEmpty: "Вибери книжку в бібліотеці або завантаж новий файл.",
     readerInitial: "Тут з'явиться один невеликий абзац. Без гонитви, без тиску.",
-    classicReadMode: "Читати в Classic Read Mode",
+    classicReadMode: "Класичне читання",
     classicReadModeHint: "Основний режим: сторінки, розділи, примітки й спокійне читання",
-    quickFragmentLabel: "Швидкий фрагмент",
-    quickFragmentTitle: "Один смисловий шматок",
-    quickFragmentPill: "ADHD tool",
+    quickFragmentLabel: "Короткий фрагмент",
+    quickFragmentTitle: "Мʼякий режим",
+    quickFragmentPill: "Без ривка",
     nextQuickFragment: "Ще фрагмент",
-    depthQuick: "Коротко",
-    depthStory: "Події",
-    depthDeep: "Глибше",
-    exitClassicReadMode: "Вийти з CRM",
+    bonusQuick: "Швидко",
+    bonusFiction: "Сюжет",
+    bonusNonfiction: "Ідеї",
+    bonusCharacters: "Персонажі",
+    exitClassicReadMode: "Вийти з читання",
     saveAndExit: "Зберегти й вийти",
+    streakLabel: "Мʼяка серія",
     streakZero: "0 днів",
     streakOne: "1 день",
     streakHint: "Повернення важливіше за ідеальну серію.",
@@ -213,7 +93,7 @@ const I18N = {
     soon: "Скоро",
     navHome: "Додому",
     navLibrary: "Бібліотека",
-    navReader: "Reader",
+    navReader: "Читання",
     navProgress: "Прогрес",
     navSettings: "Налаштування",
     refresh: "Оновити",
@@ -223,15 +103,15 @@ const I18N = {
     readerClose: "Закрити",
     readerFontDown: "Зменшити шрифт",
     readerFontUp: "Збільшити шрифт",
-    readerThemeDark: "Dark",
-    readerThemeBlack: "Black",
-    readerThemeSepia: "Sepia",
-    readerModePage: "Pages",
-    readerModeChunk: "Chunks",
+    readerThemeDark: "Темна",
+    readerThemeBlack: "Чорна",
+    readerThemeSepia: "Сепія",
+    readerModePage: "Сторінки",
+    readerModeChunk: "Фрагменти",
     readerZones: "Зони",
     readerZonesOff: "Сховати зони",
-    readerVisualProgress: "Стор. {page}/{loaded} · фрагм. {chunk}/{total}",
-    recapDepth: "Глибина переказу",
+    readerVisualProgress: "{page} / {loaded} · фрагм. {chunk}/{total}",
+    recapDepth: "Тип нагадування",
     closeRecap: "Закрити переказ",
     mainNav: "Головна навігація",
     weekDays: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
@@ -256,16 +136,15 @@ const I18N = {
     uploadAborted: "Завантаження скасовано",
     invalidUploadResponse: "Відповідь upload не є валідним JSON",
     unnamedBook: "Без назви",
-    languageSaved: "Мову збережено.",
-    activityEmpty: "Тут з'являться м'які позначки: сесії, збереження й повернення до книжки.",
-  },
+    telegramUserLabel: "Користувач Telegram",
+    activityEmpty: "Тут зʼявляться мʼякі позначки: сесії, збереження й повернення до книжки.",
 };
 
 const state = {
   screen: "home",
-  language: "ru",
+  language: "uk",
   currentUser: null,
-  displayName: "Local Reader",
+  displayName: "Локальний читач",
   books: [],
   activeBook: null,
   activeBookDetail: null,
@@ -273,7 +152,9 @@ const state = {
   totalChunks: 0,
   currentChunk: null,
   welcomeBonus: "",
-  recapDepth: "quick",
+  welcomeBonusPayload: null,
+  welcomeBonusLoading: false,
+  welcomeBonusType: "quick",
   activeSessionId: null,
   chunkCache: new Map(),
   searchResults: [],
@@ -382,7 +263,6 @@ const els = {
   chunksValue: document.querySelector("#chunksValue"),
   activityList: document.querySelector("#activityList"),
   telegramUserInfo: document.querySelector("#telegramUserInfo"),
-  languageOptions: document.querySelectorAll(".language-option"),
   navItems: document.querySelectorAll(".nav-item"),
   screens: document.querySelectorAll(".screen"),
   screenLinks: document.querySelectorAll("[data-go-screen]"),
@@ -395,7 +275,7 @@ function authHeaders() {
   return {
     "X-Telegram-User-Id": "dev-user-1",
     "X-Telegram-Username": "local_reader",
-    "X-Telegram-Display-Name": "Local Reader",
+    "X-Telegram-Display-Name": "Локальний читач",
   };
 }
 
@@ -423,14 +303,14 @@ async function apiForm(path, form, options = {}) {
 }
 
 function t(key, params = {}) {
-  const template = I18N[state.language]?.[key] ?? I18N.ru[key] ?? key;
+  const template = I18N[key] ?? key;
   if (Array.isArray(template)) return template;
   return Object.entries(params).reduce((text, [name, value]) => text.replaceAll(`{${name}}`, value), template);
 }
 
-function setLanguage(language) {
-  state.language = language === "uk" ? "uk" : "ru";
-  document.documentElement.lang = state.language === "uk" ? "uk" : "ru";
+function setLanguage() {
+  state.language = "uk";
+  document.documentElement.lang = "uk";
   applyTranslations();
 }
 
@@ -453,9 +333,6 @@ function applyTranslations() {
   els.closeWelcomeBonus.setAttribute("aria-label", t("closeRecap"));
   document.querySelector(".bottom-nav")?.setAttribute("aria-label", t("mainNav"));
   els.homeGreeting.textContent = state.displayName ? t("greeting", { name: state.displayName }) : t("welcomeDefault");
-  els.languageOptions.forEach((button) => {
-    button.classList.toggle("active", button.dataset.language === state.language);
-  });
   const meta = SCREEN_META[state.screen];
   els.screenTitle.textContent = t(meta.titleKey);
   renderAll();
@@ -466,8 +343,7 @@ async function loadCurrentUser() {
   const user = await api("/users/me");
   state.currentUser = user;
   state.displayName = user.display_name || user.username || state.displayName;
-  const language = user.preferences?.language || "ru";
-  setLanguage(language);
+  setLanguage();
 }
 
 async function loadStreak(options = {}) {
@@ -482,21 +358,6 @@ async function loadStreak(options = {}) {
   } catch (error) {
     state.streakStatus = null;
   }
-}
-
-async function saveLanguage(language) {
-  setLanguage(language);
-  const user = await api("/users/me/preferences", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ language }),
-  });
-  state.currentUser = user;
-  state.welcomeBonus = "";
-  if (state.activeBook) {
-    await loadWelcomeBonus(state.activeBook.id);
-  }
-  showNotice(t("languageSaved"));
 }
 
 function setupTelegram() {
@@ -655,7 +516,12 @@ async function openBook(bookId, options = { switchToReader: true }) {
   if (els.readerSearchInput) els.readerSearchInput.value = "";
   state.currentChunkIndex = state.activeBookDetail.current_chunk_index || 0;
   state.totalChunks = state.activeBookDetail.total_chunks || book.total_chunks || 0;
-  await loadWelcomeBonus(bookId);
+  state.welcomeBonusPayload = null;
+  state.welcomeBonus = t("welcomeLoading");
+  state.welcomeBonusLoading = true;
+  loadWelcomeBonus(bookId).catch((error) => {
+    console.warn("Welcome Bonus failed", error);
+  });
   await readChunk(bookId, state.currentChunkIndex, { trackActivity: Boolean(options.switchToReader) });
   renderAll();
 
@@ -668,11 +534,19 @@ async function openBook(bookId, options = { switchToReader: true }) {
 }
 
 async function loadWelcomeBonus(bookId) {
+  state.welcomeBonusLoading = true;
+  state.welcomeBonus = t("welcomeLoading");
+  renderWelcome();
   try {
-    const bonus = await api(`/books/${bookId}/welcome-bonus?depth=${state.recapDepth}`);
-    state.welcomeBonus = bonus.text;
+    const bonus = await api(`/books/${bookId}/welcome-bonus?type=${state.welcomeBonusType}`);
+    state.welcomeBonusPayload = normalizeWelcomePayload(bonus);
+    state.welcomeBonus = formatWelcomeBonus(bonus);
   } catch (error) {
-    state.welcomeBonus = "";
+    state.welcomeBonusPayload = null;
+    state.welcomeBonus = t("welcomeLoadError");
+  } finally {
+    state.welcomeBonusLoading = false;
+    renderWelcome();
   }
 }
 
@@ -1009,6 +883,7 @@ function getChunkParagraphs(chunk) {
 
 function normalizeReaderParagraph(text) {
   return String(text || "")
+    .replace(/([^\W\d_])-\s*\n\s*([^\W\d_])/gu, "$1$2")
     .replace(/[ \t]*\n[ \t]*/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -1179,10 +1054,12 @@ function getReaderVisualMetrics() {
   const textStyle = window.getComputedStyle(els.chunkTextValue);
   const paddingX = parseCssPixels(containerStyle.paddingLeft) + parseCssPixels(containerStyle.paddingRight);
   const paddingY = parseCssPixels(containerStyle.paddingTop) + parseCssPixels(containerStyle.paddingBottom);
+  const lineHeight = parseCssPixels(textStyle.lineHeight, parseCssPixels(containerStyle.fontSize, 20) * 1.54);
+  const safety = Math.max(30, Math.round(lineHeight * 2.1));
   const contentWidth = Math.max(120, els.chunkText.clientWidth - paddingX);
-  const contentHeight = Math.max(80, els.chunkText.clientHeight - paddingY);
-  const maxTextWidth = parseCssPixels(textStyle.maxWidth, contentWidth);
-  const width = Math.max(120, Math.min(contentWidth, maxTextWidth));
+  const contentHeight = Math.max(80, els.chunkText.clientHeight - paddingY - safety);
+  const renderedTextWidth = els.chunkTextValue.getBoundingClientRect().width;
+  const width = Math.max(120, Math.min(contentWidth, renderedTextWidth || contentWidth));
 
   return {
     width,
@@ -1200,7 +1077,7 @@ function readerTextFits(text, metrics) {
   measure.root.style.width = `${metrics.width}px`;
   measure.content.style.width = `${metrics.width}px`;
   renderReaderBlocks(measure.content, Array.isArray(text) ? text : [{ text: text || " ", continuation: false }]);
-  return measure.content.scrollHeight <= metrics.height + 1;
+  return measure.content.scrollHeight <= metrics.height;
 }
 
 function getReaderMeasure() {
@@ -1306,11 +1183,19 @@ function renderReaderBlocks(container, blocks) {
     if (!block?.text) return;
     const paragraph = document.createElement("p");
     paragraph.className = "reader-paragraph";
+    paragraph.lang = detectReaderTextLanguage(block.text);
     paragraph.classList.toggle("continuation", Boolean(block.continuation));
     paragraph.classList.toggle("chapter", Boolean(block.chapter));
     renderReaderInlineText(paragraph, block.text);
     container.append(paragraph);
   });
+}
+
+function detectReaderTextLanguage(text) {
+  const value = String(text || "");
+  if (/[іїєґІЇЄҐ]/u.test(value)) return "uk";
+  if (/[а-яёА-ЯЁ]/u.test(value)) return "ru";
+  return document.documentElement.lang || "uk";
 }
 
 function renderReaderInlineText(container, text) {
@@ -1450,10 +1335,10 @@ function setLoadingVisible(visible) {
   }
 }
 
-async function changeDepth(depth) {
-  state.recapDepth = depth;
+async function changeDepth(bonusType) {
+  state.welcomeBonusType = bonusType || "quick";
   els.depthButtons.forEach((button) => {
-    button.classList.toggle("active", button.dataset.depth === depth);
+    button.classList.toggle("active", button.dataset.bonusType === state.welcomeBonusType);
   });
   if (state.activeBook) {
     await loadWelcomeBonus(state.activeBook.id);
@@ -1493,6 +1378,69 @@ function renderWelcome() {
     els.welcomePreview.textContent = state.welcomeBonus;
     els.welcomeBonusText.textContent = state.welcomeBonus;
   }
+}
+
+function formatWelcomeBonus(bonus) {
+  const payload = normalizeWelcomePayload(bonus);
+  const title = payload.title || "";
+  const body = payload.recap || payload.main_idea || bonus?.text || "";
+  const lines = [];
+  if (title) lines.push(title);
+  if (body) lines.push(body);
+  if (Array.isArray(payload.key_points) && payload.key_points.length) {
+    lines.push(payload.key_points.slice(0, 3).map((point) => `• ${point}`).join("\n"));
+  }
+  if (Array.isArray(payload.events) && payload.events.length) {
+    lines.push(payload.events.slice(0, 3).map((event) => `• ${event}`).join("\n"));
+  }
+  if (Array.isArray(payload.characters) && payload.characters.length) {
+    lines.push(
+      payload.characters
+        .slice(0, 4)
+        .map((character) => {
+          const name = character.name || t("unknownCharacter");
+          const context = character.context || character.current_context || character.description || "";
+          return context ? `• ${name}: ${context}` : `• ${name}`;
+        })
+        .join("\n")
+    );
+  }
+  if (payload.previous_text_preview) lines.push(payload.previous_text_preview);
+  if (payload.continue_hint) lines.push(payload.continue_hint);
+  return lines.join("\n\n").trim();
+}
+
+function normalizeWelcomePayload(bonus) {
+  if (!bonus) return {};
+  if (bonus.payload && Object.keys(bonus.payload).length) return bonus.payload;
+  if (typeof bonus.text === "string") {
+    const parsed = parseJsonLikeText(bonus.text);
+    if (parsed) return parsed;
+  }
+  return {
+    type: bonus.bonus_type || "quick",
+    title: t("welcomeBonusLabel"),
+    recap: bonus.text || "",
+    continue_hint: "",
+  };
+}
+
+function parseJsonLikeText(text) {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const candidates = [trimmed];
+  const start = trimmed.indexOf("{");
+  const end = trimmed.lastIndexOf("}");
+  if (start !== -1 && end > start) candidates.push(trimmed.slice(start, end + 1));
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed;
+    } catch (error) {
+      // Keep trying the extracted JSON candidate.
+    }
+  }
+  return null;
 }
 
 function renderLibrary() {
@@ -1903,12 +1851,10 @@ function bindEvents() {
     button.addEventListener("click", () => navigate(button.dataset.goScreen));
   });
   els.depthButtons.forEach((button) => {
-    button.addEventListener("click", () => changeDepth(button.dataset.depth).catch((error) => showNotice(error.message)));
+    button.addEventListener("click", () =>
+      changeDepth(button.dataset.bonusType).catch((error) => showNotice(error.message))
+    );
   });
-  els.languageOptions.forEach((button) => {
-    button.addEventListener("click", () => saveLanguage(button.dataset.language).catch((error) => showNotice(error.message)));
-  });
-
   window.addEventListener("resize", syncViewportHeight);
   window.addEventListener("orientationchange", () => scheduleReaderRepagination(240));
   window.addEventListener("keydown", (event) => {

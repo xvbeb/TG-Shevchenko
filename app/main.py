@@ -28,6 +28,15 @@ app.include_router(sessions.router)
 app.include_router(users.router)
 
 
+@app.middleware("http")
+async def prevent_mini_app_asset_cache(request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.endswith((".html", ".css", ".js")):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate, max-age=0"
+    return response
+
+
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}

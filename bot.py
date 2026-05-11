@@ -18,7 +18,7 @@ def build_main_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
     inline_keyboard = [
         [
             InlineKeyboardButton(
-                text="Открыть reader",
+                text="Магія ТГШ",
                 web_app=WebAppInfo(url=settings.telegram_webapp_url),
             )
         ]
@@ -38,15 +38,15 @@ def build_main_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
 
 async def handle_start(message: Message) -> None:
     is_admin = str(message.from_user.id) == UNCAT_TELEGRAM_ID if message.from_user else False
-    await message.answer("Обновляю кнопки Mini App.", reply_markup=ReplyKeyboardRemove())
+    await message.answer("Оновлюю кнопки Mini App.", reply_markup=ReplyKeyboardRemove())
     await message.answer(
-        "Привет. Я помогу возвращаться к книге маленькими спокойными сессиями.",
+        "Привіт. Я допоможу повернутися до книги маленькими спокіними сесіями.",
         reply_markup=build_main_keyboard(is_admin=is_admin),
     )
 
 
 async def handle_web_app_data(message: Message) -> None:
-    await message.answer("Данные из Mini App получены. Можно продолжать чтение.")
+    await message.answer("Дані з Mini App отримано. Можна продовжувати читання.")
 
 
 def _admin_webapp_url() -> str:

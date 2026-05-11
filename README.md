@@ -47,6 +47,26 @@ DB_AUTO_CREATE=true
 
 `DATABASE_URL` is for services running inside Railway. `DATABASE_PUBLIC_URL` is for your laptop through Railway TCP proxy.
 
+Welcome Bonus recaps use a provider-switchable AI service. For MVP testing the default provider is Gemini:
+
+```env
+AI_PROVIDER=gemini
+AI_MODEL=gemini-2.5-flash
+GEMINI_API_KEY="your-google-ai-studio-key"
+WELCOME_BONUS_PROMPT_VERSION=v1
+WELCOME_BONUS_CONTEXT_CHUNKS=10
+WELCOME_BONUS_MAX_CONTEXT_CHARS=12000
+```
+
+To get a Gemini API key:
+
+1. Open [Google AI Studio](https://aistudio.google.com/).
+2. Sign in with a Google account.
+3. Open the API key section and create a key.
+4. Add the key to `.env` locally or to Railway variables as `GEMINI_API_KEY`.
+
+Keep API keys out of Git. `.env.example` intentionally leaves `GEMINI_API_KEY` empty.
+
 ## Install
 
 ```bash
@@ -103,6 +123,10 @@ TELEGRAM_BOT_TOKEN="123456:ABC..."
 TELEGRAM_WEBAPP_URL="https://your-service.up.railway.app"
 ALLOW_DEV_AUTH=false
 ENVIRONMENT=railway
+AI_PROVIDER=gemini
+AI_MODEL=gemini-2.5-flash
+GEMINI_API_KEY="your-google-ai-studio-key"
+WELCOME_BONUS_PROMPT_VERSION=v1
 ```
 
 5. Deploy the FastAPI service.
@@ -206,10 +230,34 @@ python bot.py
 
 The frontend is intentionally temporary and dependency-free. Once the reading flow feels right inside Telegram, it can be replaced with React/Vite or another frontend without changing the API shape too much.
 
-The current “AI-помощник” is a rule-based placeholder with three recap depths:
+Welcome Bonus now uses the AI service abstraction in `app/services/ai.py`. The current MVP provider is Gemini, and the business logic calls `generate_welcome_bonus(...)` so another provider can be added later without rewriting the recap endpoint.
 
-- `quick`: a short orientation.
-- `story`: a more event-like recap.
-- `deep`: a fuller recap from more previous chunks.
+The endpoint is:
 
-The API shape is ready for replacing this service with a real AI summarizer later.
+```text
+GET /books/{book_id}/welcome-bonus?type=quick
+```
+
+Supported `type` values:
+
+- `quick`: short general reminder.
+- `fiction`: recent events, active situation, and characters when present.
+- `nonfiction`: key ideas, arguments, concepts, and what to remember before continuing.
+- `characters`: who is who in the recent context.
+
+The service sends only the book title, optional book type, current chunk index, selected bonus type, UI language, and previous chunks within `WELCOME_BONUS_MAX_CONTEXT_CHARS`. It never sends the whole book or future chunks. Results are cached in `welcome_bonuses` by user, book, current chunk index, bonus type, model, and prompt version.
+
+Gemini is asked to return valid JSON only. If it returns invalid JSON, the app tries to extract JSON; if that still fails, the raw text is stored as a safe recap. If the AI provider fails or the key is missing, the endpoint returns a fallback payload instead of crashing the app.
+
+Manual test examples:
+
+```bash
+curl -s -H "X-Telegram-User-Id: dev-user-1" "http://127.0.0.1:8000/books/1/welcome-bonus?type=quick"
+curl -s -H "X-Telegram-User-Id: dev-user-1" "http://127.0.0.1:8000/books/1/welcome-bonus?type=fiction"
+curl -s -H "X-Telegram-User-Id: dev-user-1" "http://127.0.0.1:8000/books/1/welcome-bonus?type=nonfiction"
+curl -s -H "X-Telegram-User-Id: dev-user-1" "http://127.0.0.1:8000/books/1/welcome-bonus?type=characters"
+```
+
+To test fallback behavior, temporarily unset `GEMINI_API_KEY` and repeat one of the requests. The response should include `payload.type = "fallback"` and `model` should start with `fallback:`.
+
+AI provider note: do not send private user books to a free AI tier unless the user understands the provider's data handling policies.
