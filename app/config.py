@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     max_upload_mb: int = 20
     default_chunk_words: int = 220
     ai_provider: str = "gemini"
-    ai_model: str = "gemini-2.5-flash"
+    ai_model: str = "gemini-3.6-flash"
     gemini_api_key: Optional[str] = None
     welcome_bonus_prompt_version: str = "v1"
     welcome_bonus_context_chunks: int = 10

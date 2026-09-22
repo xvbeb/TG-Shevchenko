@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -17,6 +19,9 @@ from app.services.ai import (
     parse_json_payload,
 )
 from app.services.books import get_book_progress, get_user_book
+
+
+logger = logging.getLogger(__name__)
 
 
 def create_welcome_bonus(
@@ -80,7 +85,14 @@ def create_welcome_bonus(
             payload = fallback_bonus_payload("")
             cache_model = fallback_model
             generated_by = f"fallback_no_context_{prompt_version}_{bonus_type}_{language}"
-    except AIProviderError:
+    except AIProviderError as exc:
+        logger.warning(
+            "Welcome Bonus provider failed: provider=%s model=%s type=%s error=%s",
+            settings.ai_provider,
+            model,
+            bonus_type,
+            exc,
+        )
         cached_fallback = _get_cached_bonus(db, user.id, book.id, current_index, bonus_type, fallback_model, prompt_version)
         cached_fallback = _usable_cached_bonus(db, cached_fallback)
         if cached_fallback:

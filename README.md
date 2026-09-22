@@ -1,277 +1,345 @@
-# ADHD Reader Mini App MVP
+# ТГШ — читання без перевантаження 📚
 
-Backend + temporary Telegram Mini App UI for an ADHD-friendly reading app. The first goal is simple: open a book, read one small chunk, save progress, and return later with a short recap.
+**ТГШ** — Telegram Mini App для читання книжок короткими фрагментами з AI-нагадуванням контексту, збереженням прогресу та фокусом на комфортному поверненні до читання.
 
-## Stack
+Ідея проєкту проста: замість необхідності щоразу згадувати, де ти зупинився і що відбувалося раніше, застосунок зберігає прогрес та може коротко відновити контекст перед продовженням читання.
 
-- FastAPI for API and static Mini App files.
-- SQLAlchemy + PostgreSQL for data.
-- `aiogram` for the Telegram bot entrypoint.
-- Plain HTML/CSS/JS for the temporary Mini App design.
-- TXT, EPUB, FB2, and `.fb2.zip` imports.
+## ✨ Можливості
 
-## Project Structure
+* 📖 читання книжок невеликими фрагментами;
+* 📚 підтримка `TXT`, `EPUB`, `FB2` та `.fb2.zip`;
+* 🤖 AI-нагадування контексту перед продовженням читання;
+* 💾 автоматичне збереження прогресу;
+* ⏱ відстеження сесій читання;
+* 🔥 система прогресу та streaks;
+* 🎯 Focus Mode для зменшення візуального навантаження;
+* 📱 повноцінний інтерфейс всередині Telegram Mini Apps;
+* 🔐 авторизація через Telegram Mini App `initData`;
+* ⚡ кешування AI-відповідей для зменшення затримок та кількості API-запитів.
 
-- `app/main.py` creates the FastAPI app, API routes, and static Mini App.
-- `bot.py` runs the Telegram bot and sends the WebApp button.
-- `app/static/` contains the temporary Mini App UI.
-- `app/models/` contains SQLAlchemy tables.
-- `app/schemas/` contains Pydantic request/response DTOs.
-- `app/routers/` contains HTTP endpoints.
-- `app/services/` contains parsing, auth, progress, sessions, and recap logic.
+## 🤖 AI Welcome Bonus
 
-## Environment
+Одна з головних функцій ТГШ — **Welcome Bonus**.
 
-Copy and edit config:
+Коли користувач повертається до книжки після перерви, застосунок може сформувати коротке нагадування про вже прочитаний контекст.
+
+Доступні декілька режимів:
+
+* **Quick** — коротке загальне нагадування;
+* **Fiction** — останні події, поточна ситуація та важливі персонажі;
+* **Non-fiction** — ключові ідеї, аргументи та поняття;
+* **Characters** — хто є хто серед персонажів останнього контексту.
+
+AI отримує лише попередні фрагменти відносно поточної позиції користувача.
+
+**Майбутні частини книжки не передаються**, тому recap не повинен містити спойлерів із тексту, який користувач ще не прочитав.
+
+### Кешування
+
+Згенеровані результати зберігаються в PostgreSQL.
+
+Кеш враховує:
+
+* користувача;
+* книжку;
+* поточний фрагмент;
+* тип recap;
+* AI-модель;
+* версію prompt.
+
+Тому повторне відкриття тієї самої позиції не потребує нового AI-запиту.
+
+Якщо AI-провайдер недоступний або API-ключ не налаштований, застосунок повертає fallback-відповідь замість падіння endpoint.
+
+## 🏗 Архітектура
+
+Проєкт складається з декількох основних частин:
+
+```text
+Telegram
+   │
+   ├── aiogram bot
+   │
+   ▼
+Telegram Mini App
+   │
+   ▼
+FastAPI
+   │
+   ├── Authentication
+   ├── Books
+   ├── Reading progress
+   ├── Reading sessions
+   └── AI Welcome Bonus
+          │
+          ▼
+      AI Provider
+          │
+          ▼
+        Gemini
+
+FastAPI
+   │
+   ▼
+PostgreSQL
+```
+
+Backend побудований так, щоб бізнес-логіка не залежала безпосередньо від конкретного AI-провайдера.
+
+AI-рівень винесений в окрему абстракцію, тому Gemini можна замінити або доповнити іншим провайдером без переписування основної логіки читання.
+
+## 🛠 Технології
+
+### Backend
+
+* Python
+* FastAPI
+* SQLAlchemy
+* Pydantic
+* PostgreSQL
+
+### Telegram
+
+* aiogram
+* Telegram Bot API
+* Telegram Mini Apps
+* Telegram `initData` authentication
+
+### AI
+
+* Gemini API
+* provider abstraction
+* prompt versioning
+* response caching
+* fallback handling
+
+### Frontend
+
+* HTML
+* CSS
+* JavaScript
+* Telegram Mini Apps API
+
+### Infrastructure
+
+* Railway
+* PostgreSQL
+* ngrok для локального тестування Mini App
+
+## 📂 Структура проєкту
+
+```text
+TG-Shevchenko/
+│
+├── app/
+│   ├── models/       # SQLAlchemy models
+│   ├── routers/      # FastAPI endpoints
+│   ├── schemas/      # Pydantic schemas
+│   ├── services/     # business logic, AI, auth, parsing
+│   ├── static/       # Telegram Mini App frontend
+│   └── main.py       # FastAPI application
+│
+├── tests/            # automated tests
+├── bot.py            # aiogram bot
+├── requirements.txt
+├── railway.toml
+└── .env.example
+```
+
+## 📚 Робота з книжками
+
+Підтримуються:
+
+```text
+.txt
+.epub
+.fb2
+.fb2.zip
+```
+
+Після імпорту текст розбивається на фрагменти, які використовуються reader-інтерфейсом та системою AI recap.
+
+Позиція користувача зберігається в базі даних, тому читання можна продовжити з того самого місця після повторного відкриття застосунку.
+
+## 🔐 Telegram Authentication
+
+У production-запитах використовується `Telegram.WebApp.initData`.
+
+Backend перевіряє підпис Telegram за допомогою токена бота перед тим, як довіряти даним користувача.
+
+Для локальної розробки передбачений окремий development-режим:
+
+```env
+ALLOW_DEV_AUTH=true
+ENVIRONMENT=local
+```
+
+Development authentication дозволена лише в локальному environment.
+
+## 🌐 API
+
+Основні endpoints:
+
+```text
+POST /books/upload
+GET  /books
+GET  /books/{book_id}
+GET  /books/{book_id}/read
+POST /books/{book_id}/progress
+
+GET  /books/{book_id}/welcome-bonus
+
+POST /sessions/start
+POST /sessions/end
+
+GET  /health
+```
+
+Інтерактивна документація FastAPI доступна локально:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+## 🚀 Локальний запуск
+
+### 1. Клонування
+
+```bash
+git clone https://github.com/xvbeb/TG-Shevchenko.git
+cd TG-Shevchenko
+```
+
+### 2. Virtual environment
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Environment
 
 ```bash
 cp .env.example .env
 ```
 
-Required for Telegram:
+Основні змінні:
 
 ```env
-TELEGRAM_BOT_TOKEN="123456:ABC..."
-TELEGRAM_WEBAPP_URL="https://your-public-mini-app-domain"
-ADMIN_TELEGRAM_IDS="123456789"
-ALLOW_DEV_AUTH=true
-```
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_WEBAPP_URL=
 
-For local API testing without Telegram, `ALLOW_DEV_AUTH=true` lets the temporary frontend use a dev user. It only works when `ENVIRONMENT=local`; all other environments reject development headers even if the flag is accidentally enabled. The default is `false`. Real Telegram Mini App requests use `Telegram.WebApp.initData` and are verified with `TELEGRAM_BOT_TOKEN`.
+DATABASE_URL=
 
-`ADMIN_TELEGRAM_IDS` is a comma-separated list of Telegram user IDs allowed to use admin features. Keep real IDs in `.env` or Railway variables, never in source code.
-
-For Railway PostgreSQL from your local machine, use:
-
-```env
-DATABASE_PUBLIC_URL="postgresql://postgres:password@host.proxy.rlwy.net:12345/railway"
-DB_AUTO_CREATE=true
-```
-
-`DATABASE_URL` is for services running inside Railway. `DATABASE_PUBLIC_URL` is for your laptop through Railway TCP proxy.
-
-Welcome Bonus recaps use a provider-switchable AI service. For MVP testing the default provider is Gemini:
-
-```env
 AI_PROVIDER=gemini
 AI_MODEL=gemini-2.5-flash
-GEMINI_API_KEY="your-google-ai-studio-key"
-WELCOME_BONUS_PROMPT_VERSION=v1
-WELCOME_BONUS_CONTEXT_CHUNKS=10
-WELCOME_BONUS_MAX_CONTEXT_CHARS=12000
+GEMINI_API_KEY=
+
+ALLOW_DEV_AUTH=false
 ```
 
-To get a Gemini API key:
+API-ключі та токени не повинні зберігатися в Git.
 
-1. Open [Google AI Studio](https://aistudio.google.com/).
-2. Sign in with a Google account.
-3. Open the API key section and create a key.
-4. Add the key to `.env` locally or to Railway variables as `GEMINI_API_KEY`.
-
-Keep API keys out of Git. `.env.example` intentionally leaves `GEMINI_API_KEY` empty.
-
-## Install
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-## Run Locally
-
-Run API and Mini App:
+### 5. FastAPI
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
-Open locally:
+Після запуску:
 
 ```text
 http://127.0.0.1:8000/
 http://127.0.0.1:8000/docs
 ```
 
-Run Telegram bot in a second terminal:
+### 6. Telegram bot
+
+В іншому терміналі:
 
 ```bash
 source .venv/bin/activate
 python bot.py
 ```
 
-In Telegram, send `/start` to the bot and tap `Открыть reader`.
+## 📱 Локальне тестування Telegram Mini App
 
-## Temporary Railway Deployment
+Telegram Mini Apps потребують HTTPS.
 
-This deploys only the FastAPI web service: API + static Telegram Mini App page. The `aiogram` bot can still run locally, or later as a separate Railway worker service.
-
-Railway uses [config as code](https://docs.railway.com/config-as-code/reference) from `railway.toml`. The current start command is:
-
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port $PORT
-```
-
-Deploy steps:
-
-1. Push this project to GitHub.
-2. In Railway, create a new project from the GitHub repo.
-3. Add a PostgreSQL service in the same Railway project.
-4. In the FastAPI service variables, set:
-
-```env
-DATABASE_URL="${{Postgres.DATABASE_URL}}"
-DB_AUTO_CREATE=true
-TELEGRAM_BOT_TOKEN="123456:ABC..."
-TELEGRAM_WEBAPP_URL="https://your-service.up.railway.app"
-ADMIN_TELEGRAM_IDS="123456789"
-ALLOW_DEV_AUTH=false
-ENVIRONMENT=railway
-AI_PROVIDER=gemini
-AI_MODEL=gemini-2.5-flash
-GEMINI_API_KEY="your-google-ai-studio-key"
-WELCOME_BONUS_PROMPT_VERSION=v1
-```
-
-5. Deploy the FastAPI service.
-6. Open:
-
-```text
-https://your-service.up.railway.app/health
-```
-
-Expected response:
-
-```json
-{"status":"ok"}
-```
-
-7. Open the Mini App page:
-
-```text
-https://your-service.up.railway.app/
-```
-
-8. Use that same public HTTPS URL in Telegram:
-
-```env
-TELEGRAM_WEBAPP_URL="https://your-service.up.railway.app"
-```
-
-Then restart `bot.py` locally, or set the Mini App URL in BotFather/Menu Button.
-
-Notes:
-
-- `app.main:app` is the correct import path.
-- Static frontend files are served by FastAPI from `app/static`.
-- CORS middleware is not needed for this temporary deploy because the frontend and API share the same Railway origin.
-- Keep `DB_AUTO_CREATE=true` only for this temporary prototype. Replace it with Alembic migrations before real users.
-
-## Ngrok Local Testing
-
-Telegram Mini Apps need an HTTPS URL. Point ngrok to the local FastAPI server:
-
-```text
-ngrok http 8000
-```
-
-Then set:
-
-```env
-TELEGRAM_WEBAPP_URL="https://your-ngrok-domain.ngrok-free.app"
-```
-
-Restart both:
-
-```bash
-uvicorn app.main:app --reload
-python bot.py
-```
-
-## Testing Telegram Fullscreen UX
-
-1. Run FastAPI locally or deploy it to Railway.
-2. Expose it through HTTPS:
+Для локальної розробки можна використати ngrok:
 
 ```bash
 ngrok http 8000
 ```
 
-3. Set the public URL:
+Після цього HTTPS URL потрібно вказати в:
 
 ```env
-TELEGRAM_WEBAPP_URL="https://your-domain.ngrok-free.app"
+TELEGRAM_WEBAPP_URL=https://your-domain.ngrok-free.app
 ```
 
-4. Restart the bot:
+і перезапустити bot та FastAPI.
 
-```bash
-python bot.py
-```
+## 🧪 Tests
 
-5. In Telegram, send `/start`, open the Mini App, and check:
-
-- the app expands after opening;
-- the top area stays fixed;
-- the bottom navigation stays visible;
-- only the current screen scrolls;
-- Home, Library, Reader, Progress, and Settings switch without page reloads;
-- Telegram dark/light theme colors are reflected where Telegram exposes theme params.
-
-## API Routes
-
-- `POST /books/upload`
-- `GET /books`
-- `GET /books/{book_id}`
-- `GET /books/{book_id}/read`
-- `POST /books/{book_id}/progress`
-- `GET /books/{book_id}/welcome-bonus`
-- `POST /sessions/start`
-- `POST /sessions/end`
-- `GET /health`
-
-## Tests
-
-Run the local automated suite:
+Автоматичні тести запускаються через:
 
 ```bash
 pytest -q
 ```
 
-The suite covers Telegram Mini App signature verification, local-only development authentication, AI JSON parsing, admin ID configuration, and Welcome Bonus cache reuse. Live Gemini access is intentionally checked separately so routine tests remain deterministic and do not spend API quota.
+Тести перевіряють, зокрема:
 
-## MVP Notes
+* Telegram Mini App signature verification;
+* обмеження development authentication;
+* парсинг AI JSON-відповідей;
+* конфігурацію admin IDs;
+* повторне використання Welcome Bonus cache.
 
-The frontend is intentionally temporary and dependency-free. Once the reading flow feels right inside Telegram, it can be replaced with React/Vite or another frontend without changing the API shape too much.
+Live-запити до Gemini не є частиною звичайного test suite, щоб тести залишалися детермінованими та не витрачали API quota.
 
-Welcome Bonus now uses the AI service abstraction in `app/services/ai.py`. The current MVP provider is Gemini, and the business logic calls `generate_welcome_bonus(...)` so another provider can be added later without rewriting the recap endpoint.
+## 🚂 Deployment
 
-The endpoint is:
+Проєкт підготовлений для deployment на Railway.
 
-```text
-GET /books/{book_id}/welcome-bonus?type=quick
-```
-
-Supported `type` values:
-
-- `quick`: short general reminder.
-- `fiction`: recent events, active situation, and characters when present.
-- `nonfiction`: key ideas, arguments, concepts, and what to remember before continuing.
-- `characters`: who is who in the recent context.
-
-The service sends only the book title, optional book type, current chunk index, selected bonus type, UI language, and previous chunks within `WELCOME_BONUS_MAX_CONTEXT_CHARS`. It never sends the whole book or future chunks. Results are cached in `welcome_bonuses` by user, book, current chunk index, bonus type, model, and prompt version.
-
-Gemini is asked to return valid JSON only. If it returns invalid JSON, the app tries to extract JSON; if that still fails, the raw text is stored as a safe recap. If the AI provider fails or the key is missing, the endpoint returns a fallback payload instead of crashing the app.
-
-Manual test examples:
+FastAPI запускається командою:
 
 ```bash
-curl -s -H "X-Telegram-User-Id: dev-user-1" "http://127.0.0.1:8000/books/1/welcome-bonus?type=quick"
-curl -s -H "X-Telegram-User-Id: dev-user-1" "http://127.0.0.1:8000/books/1/welcome-bonus?type=fiction"
-curl -s -H "X-Telegram-User-Id: dev-user-1" "http://127.0.0.1:8000/books/1/welcome-bonus?type=nonfiction"
-curl -s -H "X-Telegram-User-Id: dev-user-1" "http://127.0.0.1:8000/books/1/welcome-bonus?type=characters"
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
 ```
 
-To test fallback behavior, temporarily unset `GEMINI_API_KEY` and repeat one of the requests. The response should include `payload.type = "fallback"` and `model` should start with `fallback:`.
+Конфігурація знаходиться в:
 
-AI provider note: do not send private user books to a free AI tier unless the user understands the provider's data handling policies.
+```text
+railway.toml
+```
+
+Для production використовуються environment variables Railway та PostgreSQL database service.
+
+Health check:
+
+```text
+GET /health
+```
+
+Очікувана відповідь:
+
+```json
+{
+  "status": "ok"
+}
+```
+
+## 💡 Навіщо я створив ТГШ
+
+Великі полотна тексту та необхідність згадувати контекст після перерви можуть створювати зайвий бар'єр перед тим, як просто продовжити читання.
+
+ТГШ — експеримент із тим, як зробити цей процес простішим: розбити книжку на комфортні фрагменти, запам'ятати позицію користувача та за потреби швидко нагадати вже прочитане.
+
+Мета проєкту — не скоротити книжку до AI-summary, а навпаки — **допомогти повернутися до самого читання**.
