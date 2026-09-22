@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     db_auto_create: bool = True
     telegram_bot_token: Optional[str] = None
     telegram_webapp_url: str = "https://reader.localhost"
-    allow_dev_auth: bool = True
+    allow_dev_auth: bool = False
+    admin_telegram_ids: str = ""
     max_upload_mb: int = 20
     default_chunk_words: int = 220
     ai_provider: str = "gemini"
@@ -37,6 +38,13 @@ class Settings(BaseSettings):
         if value.startswith("postgresql://"):
             return value.replace("postgresql://", "postgresql+psycopg://", 1)
         return value
+
+    @property
+    def admin_telegram_id_set(self) -> set[str]:
+        return {value.strip() for value in self.admin_telegram_ids.split(",") if value.strip()}
+
+    def is_admin_telegram_id(self, telegram_id: str | int | None) -> bool:
+        return telegram_id is not None and str(telegram_id) in self.admin_telegram_id_set
 
 
 @lru_cache

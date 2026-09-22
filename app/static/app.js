@@ -202,6 +202,7 @@ const els = {
   quickSession: document.querySelector("#quickSession"),
   welcomePreviewCard: document.querySelector("#welcomePreviewCard"),
   welcomePreview: document.querySelector("#welcomePreview"),
+  welcomePreviewLoader: document.querySelector("#welcomePreviewLoader"),
   recentBooks: document.querySelector("#recentBooks"),
   bookFile: document.querySelector("#bookFile"),
   bookTitle: document.querySelector("#bookTitle"),
@@ -236,6 +237,7 @@ const els = {
   chunkNextButton: document.querySelector("#chunkNextButton"),
   welcomeBonus: document.querySelector("#welcomeBonus"),
   welcomeBonusText: document.querySelector("#welcomeBonusText"),
+  welcomeBonusLoader: document.querySelector("#welcomeBonusLoader"),
   toggleWelcomeBonus: document.querySelector("#toggleWelcomeBonus"),
   closeWelcomeBonus: document.querySelector("#closeWelcomeBonus"),
   depthButtons: document.querySelectorAll(".depth-button"),
@@ -1374,9 +1376,17 @@ function renderWelcome() {
     els.welcomeBonus.classList.add("hidden");
   }
   els.toggleWelcomeBonus.disabled = !hasBonus;
+  els.welcomePreviewCard.classList.toggle("is-loading", state.welcomeBonusLoading);
+  els.welcomePreviewCard.setAttribute("aria-busy", String(state.welcomeBonusLoading));
+  els.welcomePreviewLoader?.classList.toggle("hidden", !state.welcomeBonusLoading);
+  els.welcomePreview.classList.toggle("hidden", state.welcomeBonusLoading);
+  els.welcomeBonus.classList.toggle("is-loading", state.welcomeBonusLoading);
+  els.welcomeBonus.setAttribute("aria-busy", String(state.welcomeBonusLoading));
+  els.welcomeBonusLoader?.classList.toggle("hidden", !state.welcomeBonusLoading);
+  els.welcomeBonusText.classList.toggle("hidden", state.welcomeBonusLoading);
   if (hasBonus) {
-    els.welcomePreview.textContent = state.welcomeBonus;
-    els.welcomeBonusText.textContent = state.welcomeBonus;
+    if (!state.welcomeBonusLoading) els.welcomePreview.textContent = state.welcomeBonus;
+    if (!state.welcomeBonusLoading) els.welcomeBonusText.textContent = state.welcomeBonus;
   }
 }
 

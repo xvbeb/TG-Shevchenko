@@ -15,7 +15,6 @@ from app.utils.text import build_reading_chunks, count_words, split_paragraphs
 
 
 settings = get_settings()
-UNCAT_TELEGRAM_ID = "6896703626"
 PUBLIC_BOOK_TITLES = {"заповіт"}
 
 
@@ -262,7 +261,7 @@ def can_user_edit_book(user: User, book: Book) -> bool:
 
 
 def is_uncat(user: User) -> bool:
-    return str(user.telegram_id) == UNCAT_TELEGRAM_ID
+    return settings.is_admin_telegram_id(user.telegram_id)
 
 
 def is_public_book(book: Book) -> bool:

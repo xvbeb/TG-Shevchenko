@@ -71,7 +71,10 @@ class GeminiProvider:
             "generationConfig": {
                 "temperature": 0.25,
                 "topP": 0.9,
-                "maxOutputTokens": 1000,
+                # Gemini 2.5 counts internal thinking against maxOutputTokens. Recaps
+                # are a formatting task, so disable thinking to avoid truncated JSON.
+                "thinkingConfig": {"thinkingBudget": 0},
+                "maxOutputTokens": 1600,
                 "responseMimeType": "application/json",
             },
         }

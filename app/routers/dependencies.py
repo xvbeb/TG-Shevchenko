@@ -12,6 +12,11 @@ from app.services.telegram_auth import extract_init_data_from_authorization, ver
 from app.services.users import get_or_create_telegram_user
 
 
+def dev_auth_is_allowed(settings=None) -> bool:
+    settings = settings or get_settings()
+    return settings.environment.strip().lower() == "local" and settings.allow_dev_auth
+
+
 def get_current_user(
     db: Session = Depends(get_db),
     authorization: Optional[str] = Header(default=None, alias="Authorization"),
@@ -35,7 +40,7 @@ def get_current_user(
             display_name=telegram_user.display_name,
         )
 
-    if not settings.allow_dev_auth or not telegram_id:
+    if not dev_auth_is_allowed(settings) or not telegram_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing Telegram Mini App initData",

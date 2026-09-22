@@ -57,6 +57,11 @@
 
           <article id="welcomePreviewCard" class="recap-card hidden">
             <p class="soft-label" data-i18n="welcomeBonusLabel">Що було раніше</p>
+            <div id="welcomePreviewLoader" class="recap-loader hidden" role="status" aria-live="polite">
+              <span class="recap-spinner" aria-hidden="true"></span>
+              <span data-i18n="welcomeLoading">Генерую коротке нагадування...</span>
+              <span class="recap-loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            </div>
             <p id="welcomePreview" data-i18n="welcomeFallback">Тут буде коротке нагадування перед поверненням.</p>
           </article>
 
@@ -138,6 +143,11 @@
             </div>
             <div id="welcomeBonus" class="recap-card compact hidden">
               <button id="closeWelcomeBonus" class="recap-close" aria-label="Закрити переказ">×</button>
+              <div id="welcomeBonusLoader" class="recap-loader hidden" role="status" aria-live="polite">
+                <span class="recap-spinner" aria-hidden="true"></span>
+                <span data-i18n="welcomeLoading">Генерую коротке нагадування...</span>
+                <span class="recap-loading-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              </div>
               <p id="welcomeBonusText"></p>
             </div>
 

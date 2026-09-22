@@ -33,10 +33,13 @@ Required for Telegram:
 ```env
 TELEGRAM_BOT_TOKEN="123456:ABC..."
 TELEGRAM_WEBAPP_URL="https://your-public-mini-app-domain"
+ADMIN_TELEGRAM_IDS="123456789"
 ALLOW_DEV_AUTH=true
 ```
 
-For local API testing without Telegram, `ALLOW_DEV_AUTH=true` lets the temporary frontend use a dev user. Real Telegram Mini App requests use `Telegram.WebApp.initData` and are verified with `TELEGRAM_BOT_TOKEN`.
+For local API testing without Telegram, `ALLOW_DEV_AUTH=true` lets the temporary frontend use a dev user. It only works when `ENVIRONMENT=local`; all other environments reject development headers even if the flag is accidentally enabled. The default is `false`. Real Telegram Mini App requests use `Telegram.WebApp.initData` and are verified with `TELEGRAM_BOT_TOKEN`.
+
+`ADMIN_TELEGRAM_IDS` is a comma-separated list of Telegram user IDs allowed to use admin features. Keep real IDs in `.env` or Railway variables, never in source code.
 
 For Railway PostgreSQL from your local machine, use:
 
@@ -121,6 +124,7 @@ DATABASE_URL="${{Postgres.DATABASE_URL}}"
 DB_AUTO_CREATE=true
 TELEGRAM_BOT_TOKEN="123456:ABC..."
 TELEGRAM_WEBAPP_URL="https://your-service.up.railway.app"
+ADMIN_TELEGRAM_IDS="123456789"
 ALLOW_DEV_AUTH=false
 ENVIRONMENT=railway
 AI_PROVIDER=gemini
@@ -225,6 +229,16 @@ python bot.py
 - `POST /sessions/start`
 - `POST /sessions/end`
 - `GET /health`
+
+## Tests
+
+Run the local automated suite:
+
+```bash
+pytest -q
+```
+
+The suite covers Telegram Mini App signature verification, local-only development authentication, AI JSON parsing, admin ID configuration, and Welcome Bonus cache reuse. Live Gemini access is intentionally checked separately so routine tests remain deterministic and do not spend API quota.
 
 ## MVP Notes
 

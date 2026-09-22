@@ -484,6 +484,7 @@ p {
 }
 
 .recap-card {
+  position: relative;
   margin-top: 14px;
   padding: 14px;
   border-color: color-mix(in srgb, var(--warning) 42%, var(--line));
@@ -494,7 +495,6 @@ p {
 }
 
 .recap-card.compact {
-  position: relative;
   box-shadow: none;
 }
 
@@ -512,6 +512,79 @@ p {
 
 .recap-card.compact p {
   padding-right: 26px;
+}
+
+.recap-card.is-loading {
+  min-height: 76px;
+  overflow: hidden;
+}
+
+.recap-card.is-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--warning) 12%, transparent), transparent);
+  animation: recap-shimmer 1800ms ease-in-out infinite;
+  pointer-events: none;
+}
+
+.recap-loader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding-right: 32px;
+  color: var(--text);
+  font-weight: 650;
+}
+
+.recap-spinner {
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  border: 2px solid color-mix(in srgb, var(--text) 20%, transparent);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: recap-spin 800ms linear infinite;
+}
+
+.recap-loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.recap-loading-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: recap-dot 1100ms ease-in-out infinite;
+}
+
+.recap-loading-dots i:nth-child(2) { animation-delay: 140ms; }
+.recap-loading-dots i:nth-child(3) { animation-delay: 280ms; }
+
+@keyframes recap-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes recap-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+@keyframes recap-shimmer {
+  55%, 100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recap-card.is-loading::after,
+  .recap-spinner,
+  .recap-loading-dots i {
+    animation: none;
+  }
 }
 
 .section-heading,

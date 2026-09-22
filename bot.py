@@ -8,7 +8,6 @@ from aiogram.filters import CommandStart
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, ReplyKeyboardRemove, WebAppInfo
 
 from app.config import get_settings
-from app.services.books import UNCAT_TELEGRAM_ID
 
 
 settings = get_settings()
@@ -37,7 +36,7 @@ def build_main_keyboard(is_admin: bool = False) -> InlineKeyboardMarkup:
 
 
 async def handle_start(message: Message) -> None:
-    is_admin = str(message.from_user.id) == UNCAT_TELEGRAM_ID if message.from_user else False
+    is_admin = settings.is_admin_telegram_id(message.from_user.id if message.from_user else None)
     await message.answer("Оновлюю кнопки Mini App.", reply_markup=ReplyKeyboardRemove())
     await message.answer(
         "Привіт. Я допоможу повернутися до книги маленькими спокіними сесіями.",
